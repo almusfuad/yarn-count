@@ -1,0 +1,17 @@
+version: "3.9"
+
+services:
+  app:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      PORT: "3000"
+      MQTT_BROKER: "mqtt://mqtt:1883"
+    networks:
+      - infra-network
+    restart: unless-stopped
+
+networks:
+  infra-network:
+    external: true
