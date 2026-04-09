@@ -2,6 +2,7 @@
 
 const machines = new Map();
 let broadcastFn = null;
+const { logEvent } = require('./db/eventLogger');
 
 function parseMMSS(str) {
   if (!str) return 0;
@@ -70,6 +71,14 @@ function handleMachineStatus(machineId, payload) {
     runtime: machine.runtime,
     downtime: machine.downtime
   });
+
+  // Log status change event to MongoDB (non-blocking)
+  logEvent('status_change', machineId, {
+    newStatus: machine.status,
+    runtime: machine.runtime,
+    downtime: machine.downtime,
+    timestamp: machine.lastUpdated
+  });
 }
 
 function handleRawData(machineId, payload) {
@@ -127,6 +136,17 @@ function handleRawData(machineId, payload) {
     currentRollCount: machine.currentRollCount,
     status: 'ON'
   });
+
+  // Log pulse event to MongoDB (non-blocking)
+  logEvent('pulse', machineId, {
+    rotation: Rotation,
+    runtime: machine.runtime,
+    runtimeSeconds: machine.runtimeSeconds,
+    totalCount: machine.totalCount,
+    rollsCompleted: machine.rollsCompleted,
+    currentRollCount: machine.currentRollCount,
+    timestamp: machine.lastPulseAt
+  });
 }
 
 function handleProblem(machineId, payload) {
@@ -159,6 +179,15 @@ function handleProblem(machineId, payload) {
   broadcastFn?.('alert', {
     ...problem,
     severity
+  });
+
+  // Log problem event to MongoDB (non-blocking)
+  logEvent('problem', machineId, {
+    problemType: Problem,
+    downtime: Downtime,
+    downtimeSeconds: downtimeSeconds,
+    severity,
+    timestamp: problem.timestamp
   });
 }
 

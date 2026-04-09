@@ -3,6 +3,7 @@
 const express = require('express');
 const router = express.Router();
 const machinesModule = require('../machines');
+const { logEvent } = require('../db/eventLogger');
 
 // POST /api/downtime - log downtime
 router.post('/downtime', (req, res) => {
@@ -13,6 +14,14 @@ router.post('/downtime', (req, res) => {
   }
   
   const log = machinesModule.addDowntimeLog(machineId, reason, remarks || '');
+  
+  // Log downtime event to MongoDB (non-blocking)
+  logEvent('downtime', machineId, {
+    reason,
+    remarks: remarks || '',
+    timestamp: log.timestamp
+  });
+  
   res.json(log);
 });
 
@@ -30,6 +39,15 @@ router.post('/quality', (req, res) => {
     severity || 'warning',
     description || ''
   );
+  
+  // Log quality event to MongoDB (non-blocking)
+  logEvent('quality', machineId, {
+    faultType,
+    severity: severity || 'warning',
+    description: description || '',
+    timestamp: log.timestamp
+  });
+  
   res.json(log);
 });
 

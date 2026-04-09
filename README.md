@@ -303,6 +303,80 @@ Client receives real-time updates via WebSocket:
 }
 ```
 
+## 🗄️ MongoDB Integration
+
+**NEW:** Persistent data storage with 15-month retention, automated snapshots, and data exports!
+
+- ✅ **Raw Data Persistence**: All machine pulses, status changes, and manual logs stored in MongoDB
+- ✅ **Non-Blocking Writes**: Database operations don't affect live WebSocket broadcasts
+- ✅ **Pre-Computed Snapshots**: Daily/weekly KPI aggregations (00:05 UTC daily, 00:10 UTC Sundays)
+- ✅ **Automated Exports**: Weekly data exports before 15-month TTL deletion (Mondays 22:00 UTC)
+- ✅ **Historical Queries**: Retrieve raw events and KPI snapshots by date range
+- ✅ **Health Monitoring**: Endpoints for MongoDB connection and export status checks
+
+### Setup MongoDB
+
+1. **Create MongoDB Atlas Cluster** (https://www.mongodb.com/cloud/atlas)
+   - Create project and cluster (shared M0 tier is free)
+   - Copy connection string: `mongodb+srv://username:password@cluster.mongodb.net/?appName=Cluster0`
+
+2. **Configure Environment**
+   ```bash
+   cp .env.example .env
+   # Edit .env and set your MONGODB_URI
+   nano .env
+   ```
+
+3. **Start Server** (MongoDB initialization runs automatically)
+   ```bash
+   npm run dev
+   ```
+
+### Query Historical Data
+
+**Get raw events:**
+```bash
+curl 'http://localhost:3000/api/history/events?machineId=M001&startDate=2026-04-01&endDate=2026-04-08'
+```
+
+**Get KPI snapshot:**
+```bash
+curl 'http://localhost:3000/api/history/kpi-snapshot?machineId=M001&period=daily&date=2026-04-08'
+```
+
+**Get KPI range (trend analysis):**
+```bash
+curl 'http://localhost:3000/api/history/kpi-range?machineId=M001&period=daily&startDate=2026-04-01&endDate=2026-04-08'
+```
+
+**Export data on-demand:**
+```bash
+curl -X POST 'http://localhost:3000/api/exports/trigger' \
+  -H 'Content-Type: application/json' \
+  -d '{"startDate":"2025-01-01","endDate":"2026-04-08","machineId":"M001"}'
+```
+
+**View export history:**
+```bash
+curl 'http://localhost:3000/api/exports/history?limit=10'
+```
+
+**Check system health:**
+```bash
+curl 'http://localhost:3000/api/health/system'
+# Returns: MongoDB connection status, export statistics, overall health
+```
+
+### Data Retention
+
+| Data Type | Retention | Notes |
+|-----------|-----------|-------|
+| Raw Events | 15 months (450 days) | Auto-deleted via TTL |
+| KPI Snapshots | Indefinite | Pre-computed daily/weekly aggregations |
+| Exports | Indefinite | Audit trail + backup before TTL deletion |
+
+📖 **Full documentation**: See [MONGODB_INTEGRATION.md](./MONGODB_INTEGRATION.md) for advanced configuration, testing, and troubleshooting.
+
 ## ⚙️ Configuration
 
 Set environment variables:
@@ -353,6 +427,8 @@ cd client && npm run preview
 - `ws` - Native WebSocket implementation
 - `mqtt` - MQTT client for sensor data
 - `cors` - Cross-origin resource sharing
+- `mongoose` - MongoDB ODM with connection pooling
+- `node-schedule` - Cron-based job scheduling
 - `nodemon` (dev) - Auto-restart on file changes
 
 **Client**
