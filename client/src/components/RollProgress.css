@@ -75,16 +75,24 @@
   margin-bottom: 16px;
   padding-bottom: 12px;
   border-bottom: 1px solid #f0f0f0;
+  gap: 12px;
 }
 
 .rp-counts {
   color: #4b5563;
   font-weight: 600;
+  flex: 1;
 }
 
 .rp-remaining {
   color: #6b7280;
+  text-align: center;
+  flex: 1;
+}
+
+.rp-rolls-completed {
   text-align: right;
+  flex: 1;
 }
 
 .rp-info {

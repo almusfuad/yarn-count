@@ -11,6 +11,8 @@ export default function TelegramNotifications() {
   const [status, setStatus] = useState(null);
   const [notifyOn, setNotifyOn] = useState({});
   const [loading, setLoading] = useState(true);
+  const [showAllNotifications, setShowAllNotifications] = useState(false);
+  const [acknowledgedAlerts, setAcknowledgedAlerts] = useState(new Set());
 
   useEffect(() => {
     if (isDummyMode) {
@@ -58,7 +60,23 @@ export default function TelegramNotifications() {
   };
 
   const handleBadgeClick = () => {
-    clearNotificationBadges();
+    setShowAllNotifications(true);
+  };
+
+  const handleAcknowledgeAlert = (alertId) => {
+    setAcknowledgedAlerts((prev) => new Set([...prev, alertId]));
+  };
+
+  const handleAcknowledgeAll = () => {
+    const allMessages = isDummyMode ? notificationMessages : (status?.recentMessages || []);
+    const alertIds = allMessages
+      .filter((msg) => {
+        const isCritical = msg.text?.includes('🔴') || msg.severity === 'critical' || msg.text?.includes('CRITICAL');
+        const isSuccess = msg.text?.includes('✅') || msg.severity === 'success';
+        return (isCritical || !isSuccess) && !acknowledgedAlerts.has(msg.id || msg.timestamp);
+      })
+      .map((msg) => msg.id || msg.timestamp);
+    setAcknowledgedAlerts((prev) => new Set([...prev, ...alertIds]));
   };
 
   const formatTime = (timestamp) => {
@@ -77,7 +95,7 @@ export default function TelegramNotifications() {
   }
 
   const totalUnread = (notificationBadge.critical || 0) + (notificationBadge.warning || 0) + (notificationBadge.success || 0);
-  const displayMessages = isDummyMode ? notificationMessages : (status.recentMessages || []);
+  const displayMessages = (isDummyMode ? notificationMessages : (status.recentMessages || [])).slice(-3);
 
   return (
     <div className="telegram-notifications">
@@ -186,6 +204,85 @@ export default function TelegramNotifications() {
           <div className="tn-empty">No messages sent yet</div>
         )}
       </div>
+
+      {showAllNotifications && (
+        <div className="notification-modal-overlay" onClick={() => setShowAllNotifications(false)}>
+          <div className="notification-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="notification-modal-header">
+              <div className="notification-modal-title-section">
+                <h2>Active Alerts</h2>
+                {(() => {
+                  const allMessages = isDummyMode ? notificationMessages : (status?.recentMessages || []);
+                  const unacknowledgedCount = allMessages.filter((msg) => {
+                    const isCritical = msg.text?.includes('🔴') || msg.severity === 'critical' || msg.text?.includes('CRITICAL');
+                    const isSuccess = msg.text?.includes('✅') || msg.severity === 'success';
+                    return (isCritical || !isSuccess) && !acknowledgedAlerts.has(msg.id || msg.timestamp);
+                  }).length;
+                  return unacknowledgedCount > 0 && (
+                    <span className="notification-unacknowledged-count">{unacknowledgedCount} Unacknowledged</span>
+                  );
+                })()}
+              </div>
+              <div className="notification-modal-actions">
+                {(() => {
+                  const allMessages = isDummyMode ? notificationMessages : (status?.recentMessages || []);
+                  const hasUnacknowledged = allMessages.some((msg) => {
+                    const isCritical = msg.text?.includes('🔴') || msg.severity === 'critical' || msg.text?.includes('CRITICAL');
+                    const isSuccess = msg.text?.includes('✅') || msg.severity === 'success';
+                    return (isCritical || !isSuccess) && !acknowledgedAlerts.has(msg.id || msg.timestamp);
+                  });
+                  return hasUnacknowledged && (
+                    <button className="notification-acknowledge-all-btn" onClick={handleAcknowledgeAll}>
+                      Acknowledge All
+                    </button>
+                  );
+                })()}
+                <button className="notification-modal-close" onClick={() => setShowAllNotifications(false)}>
+                  ✕
+                </button>
+              </div>
+            </div>
+            <div className="notification-modal-content">
+              {(() => {
+                const allMessages = isDummyMode ? notificationMessages : (status?.recentMessages || []);
+                const filteredMessages = allMessages.filter((msg) => {
+                  const isCritical = msg.text?.includes('🔴') || msg.severity === 'critical' || msg.text?.includes('CRITICAL');
+                  const isSuccess = msg.text?.includes('✅') || msg.severity === 'success';
+                  return (isCritical || !isSuccess) && !acknowledgedAlerts.has(msg.id || msg.timestamp);
+                });
+                return filteredMessages.length > 0 ? (
+                  filteredMessages.map((msg) => {
+                    const isCritical = msg.text?.includes('🔴') || msg.severity === 'critical' || msg.text?.includes('CRITICAL');
+                    const alertId = msg.id || msg.timestamp;
+                    return (
+                      <div
+                        key={alertId}
+                        className={`notification-modal-item ${isCritical ? 'critical' : 'warning'}`}
+                      >
+                        <div className="notification-modal-icon">
+                          {isCritical ? '🔴' : '⚠️'}
+                        </div>
+                        <div className="notification-modal-body">
+                          <div className="notification-modal-text">{msg.text}</div>
+                          <div className="notification-modal-time">{formatTime(msg.timestamp)}</div>
+                        </div>
+                        <button
+                          className="notification-acknowledge-btn"
+                          onClick={() => handleAcknowledgeAlert(alertId)}
+                        >
+                          Acknowledge
+                        </button>
+                      </div>
+                    );
+                  })
+                ) : (
+                  <div className="notification-modal-empty">All alerts acknowledged</div>
+                );
+              })()}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

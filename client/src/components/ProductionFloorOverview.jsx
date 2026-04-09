@@ -1,4 +1,3 @@
-import { useMemo } from 'react';
 import { useStore } from '../store/useStore';
 import './ProductionFloorOverview.css';
 
@@ -46,27 +45,20 @@ export default function ProductionFloorOverview() {
   const machines = useStore((state) => state.machines);
   const session = useStore((state) => state.session);
 
-  const floorData = useMemo(() => {
-    const machineList = Object.values(machines);
-    const floors = {};
+  // Calculate floor data directly (not in useMemo to ensure live updates)
+  const machineList = Object.values(machines);
+  const floors = {};
 
-    machineList.forEach((m) => {
-      const floorKey = m.machineId.split('-')[0];
-      if (!floors[floorKey]) {
-        floors[floorKey] = [];
-      }
-      floors[floorKey].push(m);
-    });
+  machineList.forEach((m) => {
+    const floorKey = m.machineId.split('-')[0];
+    if (!floors[floorKey]) {
+      floors[floorKey] = [];
+    }
+    floors[floorKey].push(m);
+  });
 
-    const floorKeysSorted = Object.keys(floors).sort();
-    const floorTarget = session.floorTarget || 800;
-
-    return {
-      floors,
-      floorKeysSorted,
-      floorTarget
-    };
-  }, [machines, session]);
+  const floorKeysSorted = Object.keys(floors).sort();
+  const floorTarget = session.floorTarget || 800;
 
   const getFloorStats = (floorMachines) => {
     const running = floorMachines.filter((m) => m.status === 'ON').length;
@@ -97,14 +89,14 @@ export default function ProductionFloorOverview() {
   };
 
   const calculateTotalCount = () => {
-    return floorData.floorKeysSorted.reduce((sum, floorKey) => {
-      const floorMachines = floorData.floors[floorKey];
+    return floorKeysSorted.reduce((sum, floorKey) => {
+      const floorMachines = floors[floorKey];
       return sum + (getFloorStats(floorMachines).liveCount || 0);
     }, 0);
   };
 
   const totalCount = calculateTotalCount();
-  const combinedTarget = floorData.floorTarget * floorData.floorKeysSorted.length;
+  const combinedTarget = floorTarget * floorKeysSorted.length;
   const overallPercentage = calculateProgressPercentage(totalCount, combinedTarget);
 
   return (
@@ -112,8 +104,8 @@ export default function ProductionFloorOverview() {
       <h3 className="pfo-title">Production Floor Overview</h3>
 
       <div className="pfo-floors-grid">
-        {floorData.floorKeysSorted.map((floorKey) => {
-          const floorMachines = floorData.floors[floorKey];
+        {floorKeysSorted.map((floorKey) => {
+          const floorMachines = floors[floorKey];
           const stats = getFloorStats(floorMachines);
 
           return (
@@ -178,15 +170,15 @@ export default function ProductionFloorOverview() {
         <div className="pfo-progress-header">
           <span className="pfo-progress-title">Floor Production Progress</span>
           <span className="pfo-progress-subtitle">
-            Target: {floorData.floorTarget} / floor · {combinedTarget} combined
+            Target: {floorTarget} / floor · {combinedTarget} combined
           </span>
         </div>
 
         <div className="pfo-progress-bars">
-          {floorData.floorKeysSorted.map((floorKey) => {
-            const floorMachines = floorData.floors[floorKey];
+          {floorKeysSorted.map((floorKey) => {
+            const floorMachines = floors[floorKey];
             const stats = getFloorStats(floorMachines);
-            const percentage = calculateProgressPercentage(stats.liveCount, floorData.floorTarget);
+            const percentage = calculateProgressPercentage(stats.liveCount, floorTarget);
             const barColor = getProgressColor(percentage);
 
             return (
@@ -205,7 +197,7 @@ export default function ProductionFloorOverview() {
                   {percentage.toFixed(1)}%
                 </div>
                 <div className="pfo-bar-count">
-                  {formatNumber(stats.liveCount)} / {floorData.floorTarget}
+                  {formatNumber(stats.liveCount)} / {floorTarget}
                 </div>
               </div>
             );

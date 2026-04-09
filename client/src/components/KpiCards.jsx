@@ -120,8 +120,9 @@ export default function KpiCards() {
   ];
 
   const currentCount = calculatedKpis.totalCount % session.rollTarget;
-  const remaining = session.rollTarget - currentCount;
-  const rollProgress = ((currentCount / session.rollTarget) * 100).toFixed(1);
+  const isAtTarget = currentCount === 0 && calculatedKpis.totalCount > 0;
+  const remaining = isAtTarget ? 0 : (session.rollTarget - currentCount);
+  const rollProgress = isAtTarget ? 100 : ((currentCount / session.rollTarget) * 100).toFixed(1);
 
   const machineProductionCards = [
     {

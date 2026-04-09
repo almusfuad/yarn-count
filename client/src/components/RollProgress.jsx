@@ -8,9 +8,16 @@ export default function RollProgress() {
 
   // Calculate totalCount from real-time machines data
   const totalCountFromMachines = Object.values(machines).reduce((sum, m) => sum + (m.totalCount || 0), 0);
+  
+  // Calculate current roll progress
   const currentCount = (totalCountFromMachines || kpis.totalCount || 0) % session.rollTarget;
-  const percentage = ((currentCount / session.rollTarget) * 100).toFixed(1);
-  const remaining = session.rollTarget - currentCount;
+  const totalRolls = Object.values(machines).reduce((sum, m) => sum + (m.rollsCompleted || 0), 0);
+  
+  // Show 100% if we're at the boundary (totalCount is a multiple of rollTarget)
+  const isAtTarget = currentCount === 0 && totalCountFromMachines > 0;
+  const percentage = isAtTarget ? 100 : ((currentCount / session.rollTarget) * 100).toFixed(1);
+  
+  const remaining = isAtTarget ? 0 : (session.rollTarget - currentCount);
 
   return (
     <div className="roll-progress">
@@ -21,19 +28,32 @@ export default function RollProgress() {
         </div>
         <div className="rp-right">
           <div className="rp-target">Roll Count Target: {session.rollTarget} counts / roll</div>
-          <div className="rp-percentage">{percentage}%</div>
+          <div className="rp-percentage" style={{
+            color: percentage === 100 ? '#10b981' : '#8b5cf6'
+          }}>
+            {percentage}%
+          </div>
         </div>
       </div>
 
       <div className="rp-bar-container">
         <div className="rp-bar-track">
-          <div className="rp-bar-fill" style={{ width: `${percentage}%` }}></div>
+          <div 
+            className="rp-bar-fill" 
+            style={{ 
+              width: `${percentage}%`,
+              backgroundColor: percentage === 100 ? '#10b981' : undefined
+            }}
+          ></div>
         </div>
       </div>
 
       <div className="rp-footer">
         <span className="rp-counts">{currentCount} counts recorded</span>
         <span className="rp-remaining">{remaining} counts remaining</span>
+        <span className="rp-rolls-completed" style={{ color: '#10b981', fontWeight: 'bold' }}>
+          Rolls Completed: {totalRolls}
+        </span>
       </div>
 
       <div className="rp-info">

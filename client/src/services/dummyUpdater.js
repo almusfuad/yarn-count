@@ -2,9 +2,6 @@ import { useStore } from '../store/useStore';
 import { playNotificationSound } from './audioUtils';
 
 let updateInterval = null;
-let notificationCounter = 0;
-let lastNotificationTime = 0;
-const NOTIFICATION_INTERVAL = 100000; // ~100 seconds (3 notifications in 5 minutes)
 
 // Machines to turn on during testing (4 of the 6 stopped machines)
 const MACHINES_TO_TURN_ON = ['F1-06', 'F2-05', 'F2-06', 'F3-05'];
@@ -37,12 +34,29 @@ export function startDummyUpdates() {
       if (machine && machine.status === 'ON') {
         // Simulate incremental production
         const increment = Math.floor(Math.random() * 5) + 1; // 1-5 count increase
-        const newTotalCount = (machine.totalCount || 0) + increment;
+        const oldTotalCount = machine.totalCount || 0;
+        const rollTarget = machine.ROLL_TARGET || 5000;
         
-        // Simulate occasional roll completion
+        // Cap the increment so we don't exceed rollTarget for current roll
+        const currentRollCount = oldTotalCount % rollTarget;
+        const maxIncrementForThisRoll = rollTarget - currentRollCount;
+        const cappedIncrement = Math.min(increment, maxIncrementForThisRoll);
+        
+        // If we're already at the target, don't increment further
+        if (currentRollCount >= rollTarget) {
+          // Skip this update - already at target
+          currentMachines = useStore.getState().machines;
+          continue;
+        }
+        
+        const newTotalCount = oldTotalCount + cappedIncrement;
+        
+        // Calculate if we just completed a roll (reached the rollTarget)
+        const newRollProgress = newTotalCount % rollTarget;
+        
         let newRollsCompleted = machine.rollsCompleted || 0;
-        const currentRollCount = newTotalCount % (machine.ROLL_TARGET || 5000);
-        if (currentRollCount < (machine.currentRollCount || 0)) {
+        // If we reached the target boundary, increment rolls completed and reset count
+        if (newRollProgress === 0 && cappedIncrement > 0) {
           newRollsCompleted += 1;
         }
         
@@ -55,7 +69,7 @@ export function startDummyUpdates() {
           rollsCompleted: newRollsCompleted,
           runtimeSeconds: newRuntimeSeconds,
           downtimeSeconds: newDowntimeSeconds,
-          currentRollCount
+          currentRollCount: newRollProgress
         });
         
         // Get fresh state after this update
@@ -155,36 +169,6 @@ export function startDummyUpdates() {
         
         nextStopIndex++;
         lastStopTime = now;
-      }
-    }
-    
-    // Trigger notifications every ~100 seconds (3 notifications in 5 minutes)
-    if (now - lastNotificationTime > NOTIFICATION_INTERVAL) {
-      const freshMachines = useStore.getState().machines;
-      const allMachineIds = Object.keys(freshMachines);
-      const randomMachine = freshMachines[allMachineIds[Math.floor(Math.random() * allMachineIds.length)]];
-      
-      const severity = Math.random() < 0.3 ? 'critical' : 'warning';
-      
-      let notificationMessage = '';
-      if (severity === 'critical') {
-        notificationMessage = `🔴 CRITICAL: ${randomMachine?.machineId || 'CNC-KNIT-01'} on Floor ${randomMachine?.machineId?.split('-')[1] || '1'} stopped`;
-      } else {
-        notificationMessage = `⚠️ WARNING: ${randomMachine?.machineId || 'CNC-KNIT-01'} stopped – no pulse`;
-      }
-      
-      useStore.getState().incrementNotificationBadge(severity);
-      useStore.getState().addNotificationMessage(notificationMessage, severity);
-      playNotificationSound(severity);
-      lastNotificationTime = now;
-    }
-    
-    // Occasionally trigger an alert (20% chance)
-    if (Math.random() < 0.2) {
-      const freshMachines = useStore.getState().machines;
-      const stoppedMachines = Object.keys(freshMachines).filter(id => freshMachines[id].status !== 'ON');
-      if (stoppedMachines.length > 0) {
-        // Alert will be added separately if needed
       }
     }
   }, 1000); // Update every 1 second
