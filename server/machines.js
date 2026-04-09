@@ -198,8 +198,41 @@ function getDashboardKPIs() {
   const totalMachines = machines_array.length;
   const activeMachines = machines_array.filter(m => m.status === 'ON').length;
   const totalFaults = machines_array.reduce((sum, m) => sum + m.qualityLogs.length, 0);
+  const criticalFaults = machines_array.reduce(
+    (sum, m) => sum + m.qualityLogs.filter(q => q.severity === 'critical').length,
+    0
+  );
 
-  const utilization = totalRuntimeSeconds + totalDowntimeSeconds > 0 ? (totalRuntimeSeconds / (totalRuntimeSeconds + totalDowntimeSeconds)) * 100 : 0;
+  // Calculate total kg from all roll weight logs
+  const totalKg = machines_array.reduce((sum, m) => {
+    return sum + m.rollWeightLog.reduce((s, r) => s + (r.weight || 0), 0);
+  }, 0);
+
+  // Build roll history: combine rollWeightLog across machines
+  const rollHistory = [];
+  machines_array.forEach((m) => {
+    for (let i = 1; i <= m.rollsCompleted; i++) {
+      const weightEntry = m.rollWeightLog.find((r) => r.rollNumber === i);
+      rollHistory.push({
+        rollNumber: i,
+        machineId: m.machineId,
+        count: m.ROLL_TARGET,
+        weight: weightEntry ? weightEntry.weight : null,
+        completedAt: weightEntry ? weightEntry.timestamp : null,
+        weighed: !!weightEntry
+      });
+    }
+  });
+  rollHistory.sort((a, b) => b.rollNumber - a.rollNumber); // newest first
+
+  // Aggregate quality logs from all machines
+  const qualityLogs = machines_array
+    .flatMap((m) => m.qualityLogs.map((q) => ({ ...q, machineId: m.machineId })))
+    .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
+    .slice(0, 50);
+
+  const utilization =
+    totalRuntimeSeconds + totalDowntimeSeconds > 0 ? (totalRuntimeSeconds / (totalRuntimeSeconds + totalDowntimeSeconds)) * 100 : 0;
   const estimatedOutput = Math.round(totalCount * 0.95);
   const faultRate = totalCount > 0 ? (totalFaults / totalCount) * 1000 : 0;
 
@@ -210,6 +243,11 @@ function getDashboardKPIs() {
     totalRolls,
     totalDowntimeSeconds,
     totalRuntimeSeconds,
+    totalKg: Math.round(totalKg * 100) / 100,
+    totalFaults,
+    criticalFaults,
+    rollHistory,
+    qualityLogs,
     utilization: Math.round(utilization * 100) / 100,
     estimatedOutput,
     faultRate: Math.round(faultRate * 100) / 100,

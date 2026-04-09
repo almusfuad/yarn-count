@@ -70,6 +70,12 @@
   color: #333;
 }
 
+.bottom-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+
 /* Responsive */
 @media (max-width: 1024px) {
   .content-grid {

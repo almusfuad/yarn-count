@@ -12,15 +12,32 @@ export const useStore = create((set) => ({
     totalRolls: 0,
     totalDowntime: 0,
     totalRuntime: 0,
+    totalRuntimeSeconds: 0,
+    totalKg: 0,
     utilization: 0,
     estimatedOutput: 0,
     faultRate: 0,
+    totalFaults: 0,
+    criticalFaults: 0,
+    rollHistory: [],
+    qualityLogs: [],
     timestamp: null
   },
   filter: 'ALL',
+  session: {
+    company: 'Amantex Ltd',
+    asset: 'CNC-KNIT-01',
+    job: 'ARTICLE-SW-2026',
+    rollTarget: 500,
+    floorTarget: 800,
+    operator: 'Ahmed Khan',
+    shift: 'Morning (06:00–14:00)'
+  },
 
   // Actions
   setConnectionStatus: (status) => set({ connectionStatus: status }),
+
+  setSession: (session) => set({ session }),
 
   initMachines: (machineList) =>
     set(() => {

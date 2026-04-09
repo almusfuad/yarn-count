@@ -1,0 +1,266 @@
+.quality-control {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+  padding: 20px;
+  margin-bottom: 24px;
+}
+
+.qc-title {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: #9ca3af;
+  margin: 0 0 16px;
+}
+
+.qc-kpi-row {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.qc-kpi-card {
+  flex: 1;
+  background: white;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.qc-kpi-icon {
+  font-size: 28px;
+  flex-shrink: 0;
+}
+
+.qc-kpi-content {
+  flex: 1;
+}
+
+.qc-kpi-value {
+  font-size: 28px;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.qc-kpi-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: #6b7280;
+  margin-bottom: 2px;
+}
+
+.qc-kpi-sublabel {
+  font-size: 12px;
+  color: #9ca3af;
+}
+
+.qc-content {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.qc-left-card,
+.qc-right-card {
+  background: inherit;
+}
+
+.qc-card-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #1f2937;
+  margin: 0 0 16px;
+}
+
+.qc-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.qc-card-header .qc-card-title {
+  margin: 0;
+}
+
+.qc-log-badge {
+  background: #f0f0f0;
+  color: #6b7280;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.qc-form {
+  display: flex;
+  flex-direction: column;
+}
+
+.qc-form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.qc-form-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.qc-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #6c757d;
+  margin-bottom: 8px;
+}
+
+.qc-required {
+  color: #dc3545;
+}
+
+.qc-select,
+.qc-textarea {
+  border: 1px solid #dee2e6;
+  border-radius: 6px;
+  padding: 8px 12px;
+  font-size: 13px;
+  font-family: inherit;
+}
+
+.qc-select:focus,
+.qc-textarea:focus {
+  outline: none;
+  border-color: #4f46e5;
+  box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.1);
+}
+
+.qc-select:disabled {
+  background: #f3f4f6;
+  color: #9ca3af;
+  cursor: not-allowed;
+}
+
+.qc-textarea {
+  min-height: 80px;
+  resize: vertical;
+  grid-column: 1 / -1;
+}
+
+.qc-submit-btn {
+  width: 100%;
+  background: #4f46e5;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 12px;
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+  margin-bottom: 12px;
+  transition: background 0.2s ease;
+}
+
+.qc-submit-btn:hover {
+  background: #4338ca;
+}
+
+.qc-info-strip {
+  background: #fffbea;
+  border: 1px solid #fcd34d;
+  border-radius: 6px;
+  padding: 10px 12px;
+  font-size: 12px;
+  color: #4b5563;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.qc-info-icon {
+  flex-shrink: 0;
+  font-size: 14px;
+}
+
+.qc-info-text {
+  line-height: 1.4;
+}
+
+.qc-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.qc-table thead {
+  background: #f8f9fa;
+}
+
+.qc-table thead th {
+  text-align: left;
+  padding: 10px 12px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.qc-table tbody tr {
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.qc-table tbody tr:hover {
+  background: #fafafa;
+}
+
+.qc-table td {
+  padding: 10px 12px;
+  color: #4b5563;
+}
+
+.qc-empty {
+  text-align: center;
+  color: #9ca3af;
+  font-style: italic;
+}
+
+.qc-floor-pill {
+  display: inline-block;
+  padding: 3px 8px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.qc-machine-cell {
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.qc-severity-badge {
+  display: inline-block;
+  padding: 3px 8px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.qc-notes {
+  max-width: 150px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

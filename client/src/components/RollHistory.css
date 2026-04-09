@@ -1,0 +1,123 @@
+.roll-history {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+  padding: 20px 24px;
+  margin-bottom: 24px;
+}
+
+.rh-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.rh-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #1f2937;
+  margin: 0;
+}
+
+.rh-stats {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.rh-badge {
+  background: #e0e7ff;
+  color: #4f46e5;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.rh-badge.pending {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.rh-total {
+  font-size: 13px;
+  font-weight: 600;
+  color: #7c3aed;
+  margin-left: 12px;
+}
+
+.rh-empty {
+  font-size: 13px;
+  color: #9ca3af;
+  font-style: italic;
+}
+
+.rh-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.rh-table thead {
+  background: #f8f9fa;
+}
+
+.rh-table thead th {
+  text-align: left;
+  padding: 10px 12px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.rh-table tbody tr {
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.rh-table tbody tr:hover {
+  background: #fafafa;
+}
+
+.rh-table td {
+  padding: 10px 12px;
+  color: #4b5563;
+}
+
+.rh-roll-num {
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.rh-kg {
+  color: #4b5563;
+  font-weight: 600;
+}
+
+.rh-not-entered {
+  font-style: italic;
+  color: #9ca3af;
+}
+
+.rh-status-badge {
+  display: inline-block;
+  padding: 3px 8px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.rh-status-badge.weighed {
+  background: #d4edda;
+  color: #155724;
+}
+
+.rh-status-badge.pending-wt {
+  background: #fff3cd;
+  color: #856404;
+}

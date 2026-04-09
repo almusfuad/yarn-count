@@ -1,0 +1,225 @@
+.pfo-container {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+  padding: 16px 20px 20px;
+  margin-bottom: 24px;
+}
+
+.pfo-title {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: #9ca3af;
+  margin: 0 0 16px;
+}
+
+.pfo-floors-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.pfo-floor-card {
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  overflow: hidden;
+  background: white;
+}
+
+.pfo-floor-header {
+  padding: 12px 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: white;
+}
+
+.pfo-floor-name {
+  font-size: 15px;
+  font-weight: 700;
+  margin-bottom: 2px;
+}
+
+.pfo-floor-label {
+  font-size: 12px;
+  opacity: 0.75;
+}
+
+.pfo-header-right {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+}
+
+.pfo-connection-dot {
+  color: #10b981;
+  font-size: 10px;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.6;
+  }
+}
+
+.pfo-status-text {
+  opacity: 0.85;
+}
+
+.pfo-machines-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 4px;
+  padding: 12px;
+  background: #fafafa;
+}
+
+.pfo-machine-card {
+  border-radius: 4px;
+  padding: 6px 4px;
+  text-align: center;
+  color: white;
+  font-size: 11px;
+}
+
+.pfo-machine-card.running {
+  background: #10b981;
+}
+
+.pfo-machine-card.stopped {
+  background: #ef4444;
+}
+
+.pfo-machine-id {
+  font-weight: 700;
+  margin-bottom: 2px;
+  font-size: 10px;
+}
+
+.pfo-machine-status {
+  font-size: 9px;
+  font-weight: 600;
+  text-transform: uppercase;
+  opacity: 0.9;
+}
+
+.pfo-legend {
+  display: flex;
+  gap: 16px;
+  padding: 4px 12px 8px;
+  font-size: 12px;
+  color: #6b7280;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.pfo-kpi-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  background: #f8f9fa;
+  padding: 10px 12px;
+  border-radius: 0 0 8px 8px;
+}
+
+.pfo-kpi-item {
+  text-align: center;
+}
+
+.pfo-kpi-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  color: #9ca3af;
+  font-weight: 600;
+  margin-bottom: 2px;
+}
+
+.pfo-kpi-value {
+  font-size: 14px;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+.pfo-progress-section {
+  border-top: 1px solid #f0f0f0;
+  padding: 16px 0 0;
+}
+
+.pfo-progress-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.pfo-progress-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+.pfo-progress-subtitle {
+  font-size: 12px;
+  color: #9ca3af;
+}
+
+.pfo-progress-bars {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.pfo-bar-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.pfo-bar-row.overall {
+  padding-top: 8px;
+  border-top: 1px solid #f0f0f0;
+  margin-top: 4px;
+}
+
+.pfo-bar-label {
+  width: 60px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #4b5563;
+}
+
+.pfo-bar-track {
+  flex: 1;
+  height: 10px;
+  background: #e9ecef;
+  border-radius: 5px;
+  overflow: hidden;
+}
+
+.pfo-bar-fill {
+  height: 100%;
+  border-radius: 5px;
+  transition: width 0.5s ease;
+}
+
+.pfo-bar-percentage {
+  width: 50px;
+  text-align: right;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.pfo-bar-count {
+  width: 90px;
+  text-align: right;
+  font-size: 12px;
+  color: #6b7280;
+}

@@ -2,9 +2,15 @@ import { useEffect } from 'react';
 import { useStore } from './store/useStore';
 import { initSocket, closeSocket } from './services/socket';
 import Header from './components/Header';
+import SetupPanel from './components/SetupPanel';
 import KpiCards from './components/KpiCards';
+import RollProgress from './components/RollProgress';
+import RollHistory from './components/RollHistory';
+import DowntimePanel from './components/DowntimePanel';
+import ProductionFloorOverview from './components/ProductionFloorOverview';
+import QualityControl from './components/QualityControl';
+import TelegramNotifications from './components/TelegramNotifications';
 import MachineGrid from './components/MachineGrid';
-import AlertPanel from './components/AlertPanel';
 import RollPanel from './components/RollPanel';
 import DowntimeForm from './components/DowntimeForm';
 import QualityForm from './components/QualityForm';
@@ -20,10 +26,20 @@ export default function App() {
   return (
     <div className="app-container">
       <Header />
+      <SetupPanel />
       
       <main className="main-content">
         <section className="dashboard-section">
           <KpiCards />
+          <RollProgress />
+          <RollHistory />
+          <DowntimePanel />
+          <ProductionFloorOverview />
+          <QualityControl />
+          <div className="bottom-row">
+            <TelegramNotifications />
+            <EventLog />
+          </div>
         </section>
 
         <div className="content-grid">
@@ -33,10 +49,6 @@ export default function App() {
           </section>
 
           <aside className="sidebar">
-            <section className="alerts-section">
-              <AlertPanel />
-            </section>
-
             <section className="actions-section">
               <RollPanel />
               <DowntimeForm />
@@ -44,10 +56,6 @@ export default function App() {
             </section>
           </aside>
         </div>
-
-        <section className="events-section">
-          <EventLog />
-        </section>
       </main>
     </div>
   );

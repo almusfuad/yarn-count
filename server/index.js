@@ -8,6 +8,7 @@ const cors = require('cors');
 const machinesModule = require('./machines');
 const { init: initBroadcast, sendToClient, broadcast } = require('./broadcast');
 const { startMqtt } = require('./mqtt');
+const telegram = require('./telegram');
 
 const app = express();
 const server = http.createServer(app);
@@ -48,6 +49,16 @@ app.post('/api/alerts/ack', (req, res) => {
   }
   machinesModule.acknowledgeAlert(machineId, alertId);
   res.json({ acked: true });
+});
+
+// Telegram notification routes
+app.get('/api/telegram/status', (req, res) => {
+  res.json(telegram.getStatus());
+});
+
+app.post('/api/telegram/config', (req, res) => {
+  telegram.updateConfig(req.body);
+  res.json({ ok: true });
 });
 
 // Health check
