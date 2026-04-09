@@ -37,9 +37,9 @@ export default function App() {
   return (
     <div className="app-container">
       <Header />
-      <SetupPanel />
       
       <main className="main-content">
+        <SetupPanel />
         <section className="dashboard-section">
           <KpiCards />
           <RollProgress />
@@ -51,7 +51,7 @@ export default function App() {
             <TelegramNotifications />
             <EventLog />
           </div>
-        </section>
+      </section>
       </main>
     </div>
   );
