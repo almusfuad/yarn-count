@@ -3,10 +3,16 @@
 const machines = new Map();
 let broadcastFn = null;
 
-function parseHHMM(str) {
+function parseMMSS(str) {
   if (!str) return 0;
-  const [h, m] = str.split(':').map(Number);
-  return (h || 0) * 60 + (m || 0);
+  const parts = str.split(':');
+  if (parts.length === 2) {
+    // MM:SS format
+    const minutes = parseInt(parts[0], 10);
+    const seconds = parseInt(parts[1], 10);
+    return minutes * 60 + seconds;
+  }
+  return 0;
 }
 
 function createMachineState(machineId) {
@@ -19,8 +25,10 @@ function createMachineState(machineId) {
     currentRollCount: 0,
     rollsCompleted: 0,
     ROLL_TARGET: 500,
-    runtimeMinutes: 0,
-    downtimeMinutes: 0,
+    runtime: '00:00',        // MM:SS format
+    downtime: '00:00',       // MM:SS format
+    runtimeSeconds: 0,       // internal calculations
+    downtimeSeconds: 0,      // internal calculations
     activeProblems: [],
     alerts: [],
     events: [],
@@ -42,18 +50,25 @@ function handleMachineStatus(machineId, payload) {
   const machine = getOrCreateMachine(machineId);
   const { Status, RT, DT, Timestamp } = payload;
 
+  console.log(`[HANDLERS] Machine Status - Machine: ${machineId}`);
+  console.log(`  Incoming: Status=${Status}, RT=${RT}, DT=${DT}, Timestamp=${Timestamp}`);
+
   machine.status = Status === 'ON' ? 'ON' : Status === 'OFF' ? 'OFF' : 'STOPPED';
-  machine.runtimeMinutes = parseHHMM(RT);
-  machine.downtimeMinutes = parseHHMM(DT);
+  machine.runtime = RT || '00:00';
+  machine.downtime = DT || '00:00';
+  machine.runtimeSeconds = parseMMSS(RT);
+  machine.downtimeSeconds = parseMMSS(DT);
   machine.lastUpdated = Timestamp || new Date().toISOString();
+
+  console.log(`  Stored: runtime=${machine.runtime} (${machine.runtimeSeconds}s), downtime=${machine.downtime} (${machine.downtimeSeconds}s)`);
 
   if (machine.stopTimer) clearTimeout(machine.stopTimer);
 
   broadcastFn?.('machine_update', {
     machineId,
     status: machine.status,
-    runtimeMinutes: machine.runtimeMinutes,
-    downtimeMinutes: machine.downtimeMinutes
+    runtime: machine.runtime,
+    downtime: machine.downtime
   });
 }
 
@@ -61,20 +76,30 @@ function handleRawData(machineId, payload) {
   const machine = getOrCreateMachine(machineId);
   const { Rotation, RT, Timestamp } = payload;
 
+  console.log(`[HANDLERS] Raw Data - Machine: ${machineId}`);
+  console.log(`  Incoming: Rotation=${Rotation}, RT=${RT}, Timestamp=${Timestamp}`);
+
   if (machine.stopTimer) clearTimeout(machine.stopTimer);
 
   machine.lastPulseAt = Timestamp || new Date().toISOString();
   machine.status = 'ON';
-  machine.runtimeMinutes = parseHHMM(RT);
+  machine.runtime = RT || '00:00';
+  machine.runtimeSeconds = parseMMSS(RT);
+
+  console.log(`  Stored: runtime=${machine.runtime} (${machine.runtimeSeconds}s)`);
 
   if (Rotation > 0) {
-    machine.totalCount += Rotation;
-    machine.currentRollCount += Rotation;
+    machine.totalCount = Rotation;
+    
+    // Calculate rolls completed and current progress
+    machine.rollsCompleted = Math.floor(machine.totalCount / machine.ROLL_TARGET);
+    machine.currentRollCount = machine.totalCount % machine.ROLL_TARGET;
+    
+    console.log(`  Count Updated: totalCount=${machine.totalCount}, rollsCompleted=${machine.rollsCompleted}, currentRollCount=${machine.currentRollCount}`);
 
-    // Roll completion logic
-    if (machine.currentRollCount >= machine.ROLL_TARGET) {
-      machine.rollsCompleted++;
-      machine.currentRollCount = 0;
+    // Check if we just completed a new roll
+    if (machine.currentRollCount === 0 && machine.totalCount > 0) {
+      console.log(`  🎯 ROLL COMPLETE: Roll #${machine.rollsCompleted} completed!`);
 
       broadcastFn?.('event', {
         machineId,
@@ -89,6 +114,7 @@ function handleRawData(machineId, payload) {
   machine.stopTimer = setTimeout(() => {
     machine.status = 'STOPPED';
     machine.stopTimer = null;
+    console.log(`[HANDLERS] Machine ${machineId} status changed to STOPPED (no pulse for 4s)`);
     broadcastFn?.('machine_update', {
       machineId,
       status: 'STOPPED'
@@ -107,29 +133,40 @@ function handleProblem(machineId, payload) {
   const machine = getOrCreateMachine(machineId);
   const { Problem, Downtime, Timestamp } = payload;
 
+  console.log(`[HANDLERS] Problem Alert - Machine: ${machineId}`);
+  console.log(`  Incoming: Problem=${Problem}, Downtime=${Downtime}, Timestamp=${Timestamp}`);
+
   const problemId = `${machineId}-${Date.now()}`;
+  const downtimeSeconds = parseMMSS(Downtime);
   const problem = {
     id: problemId,
     machineId,
     type: Problem,
-    downtime: parseHHMM(Downtime),
+    downtime: Downtime,        // Keep as MM:SS
+    downtimeSeconds: downtimeSeconds,
     timestamp: Timestamp || new Date().toISOString(),
     acked: false
   };
 
+  console.log(`  Stored: downtime=${Downtime} (${downtimeSeconds}s)`);
+
   machine.activeProblems.push(problem);
   machine.alerts.push(problem);
 
+  const severity = Problem.includes('breakage') || Problem.includes('failure') ? 'critical' : 'warning';
+  console.log(`  Alert ID: ${problemId}, Severity: ${severity}`);
+
   broadcastFn?.('alert', {
     ...problem,
-    severity: Problem.includes('breakage') || Problem.includes('failure') ? 'critical' : 'warning'
+    severity
   });
 }
 
 function getMachineSummary(machine) {
+  const totalTime = machine.runtimeSeconds + machine.downtimeSeconds;
   const utilizationPercent =
-    machine.runtimeMinutes + machine.downtimeMinutes > 0
-      ? (machine.runtimeMinutes / (machine.runtimeMinutes + machine.downtimeMinutes)) * 100
+    totalTime > 0
+      ? (machine.runtimeSeconds / totalTime) * 100
       : 0;
 
   return {
@@ -138,9 +175,11 @@ function getMachineSummary(machine) {
     totalCount: machine.totalCount,
     currentRollCount: machine.currentRollCount,
     rollsCompleted: machine.rollsCompleted,
-    runtimeMinutes: machine.runtimeMinutes,
-    downtimeMinutes: machine.downtimeMinutes,
-    utilization: utilizationPercent,
+    runtime: machine.runtime,
+    downtime: machine.downtime,
+    runtimeSeconds: machine.runtimeSeconds,
+    downtimeSeconds: machine.downtimeSeconds,
+    utilization: Math.round(utilizationPercent * 100) / 100 || 0,
     activeProblems: machine.activeProblems.length,
     unackedAlerts: machine.alerts.filter(a => !a.acked).length,
     estimatedOutput: Math.round(machine.totalCount * 0.95),
@@ -154,13 +193,13 @@ function getDashboardKPIs() {
 
   const totalCount = machines_array.reduce((sum, m) => sum + m.totalCount, 0);
   const totalRolls = machines_array.reduce((sum, m) => sum + m.rollsCompleted, 0);
-  const totalDowntime = machines_array.reduce((sum, m) => sum + m.downtimeMinutes, 0);
-  const totalRuntime = machines_array.reduce((sum, m) => sum + m.runtimeMinutes, 0);
+  const totalDowntimeSeconds = machines_array.reduce((sum, m) => sum + m.downtimeSeconds, 0);
+  const totalRuntimeSeconds = machines_array.reduce((sum, m) => sum + m.runtimeSeconds, 0);
   const totalMachines = machines_array.length;
   const activeMachines = machines_array.filter(m => m.status === 'ON').length;
   const totalFaults = machines_array.reduce((sum, m) => sum + m.qualityLogs.length, 0);
 
-  const utilization = totalRuntime + totalDowntime > 0 ? (totalRuntime / (totalRuntime + totalDowntime)) * 100 : 0;
+  const utilization = totalRuntimeSeconds + totalDowntimeSeconds > 0 ? (totalRuntimeSeconds / (totalRuntimeSeconds + totalDowntimeSeconds)) * 100 : 0;
   const estimatedOutput = Math.round(totalCount * 0.95);
   const faultRate = totalCount > 0 ? (totalFaults / totalCount) * 1000 : 0;
 
@@ -169,8 +208,8 @@ function getDashboardKPIs() {
     activeMachines,
     totalCount,
     totalRolls,
-    totalDowntime,
-    totalRuntime,
+    totalDowntimeSeconds,
+    totalRuntimeSeconds,
     utilization: Math.round(utilization * 100) / 100,
     estimatedOutput,
     faultRate: Math.round(faultRate * 100) / 100,
@@ -240,7 +279,7 @@ function setBroadcast(fn) {
 }
 
 module.exports = {
-  parseHHMM,
+  parseMMSS,
   createMachineState,
   handleMachineStatus,
   handleRawData,

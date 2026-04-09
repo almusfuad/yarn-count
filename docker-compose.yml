@@ -7,7 +7,7 @@ services:
       - "3000:3000"
     environment:
       PORT: "3000"
-      MQTT_BROKER: "mqtt://mqtt:1883"
+      MQTT_BROKER: "mqtt://152.42.238.142:1883"
     networks:
       - infra-network
     restart: unless-stopped

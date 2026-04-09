@@ -54,17 +54,17 @@ export default function MachineCard({ machine }) {
 
         <div className="info-row">
           <span className="label">Runtime:</span>
-          <span className="value">{machine.runtimeMinutes}m</span>
+          <span className="value">{machine.runtime || '00:00'}</span>
         </div>
 
         <div className="info-row">
           <span className="label">Downtime:</span>
-          <span className="value" style={{ color: '#f44336' }}>{machine.downtimeMinutes}m</span>
+          <span className="value" style={{ color: '#f44336' }}>{machine.downtime || '00:00'}</span>
         </div>
 
         <div className="info-row">
           <span className="label">Utilization:</span>
-          <span className="value">{machine.utilization.toFixed(1)}%</span>
+          <span className="value">{(machine.utilization || 0).toFixed(1)}%</span>
         </div>
 
         {machine.unackedAlerts > 0 && (

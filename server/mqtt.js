@@ -13,25 +13,43 @@ const MQTT_BROKER = process.env.MQTT_BROKER || 'mqtt://localhost:1883';
 let client = null;
 
 function handleMqttMessage(topic, message) {
-  const payload = JSON.parse(message.toString());
-  const parts = topic.split('/');
-  
-  if (parts.length < 3) return;
-  
-  const [, machineId, msgType] = parts;
+  try {
+    const messageStr = message.toString();
+    console.log(`\n[MQTT-RCV] ═══════════════════════════════════════`);
+    console.log(`[MQTT-RCV] TOPIC  → ${topic}`);
+    console.log(`[MQTT-RCV] PAYLOAD→ ${messageStr}`);
 
-  switch (msgType) {
-    case 'machine_status':
-      handleMachineStatus(machineId, payload);
-      break;
-    case 'machine_rawdata':
-      handleRawData(machineId, payload);
-      break;
-    case 'problem':
-      handleProblem(machineId, payload);
-      break;
-    default:
-      console.log(`Unknown message type: ${msgType}`);
+    const parts = topic.split('/');
+    if (parts.length < 3) {
+      console.error(`[MQTT-RCV] ✗ Invalid topic format: ${topic} (expected Device/machineId/type)`);
+      return;
+    }
+
+    const [, machineId, msgType] = parts;
+    let payload;
+
+    try {
+      payload = JSON.parse(messageStr);
+    } catch (parseErr) {
+      console.error(`[MQTT-RCV] ✗ JSON parse error: ${parseErr.message}`);
+      return;
+    }
+
+    switch (msgType) {
+      case 'machine_status':
+        handleMachineStatus(machineId, payload);
+        break;
+      case 'machine_rawdata':
+        handleRawData(machineId, payload);
+        break;
+      case 'problem':
+        handleProblem(machineId, payload);
+        break;
+      default:
+        console.warn(`[MQTT-RCV] ⚠ Unknown message type: ${msgType}`);
+    }
+  } catch (err) {
+    console.error(`[MQTT-RCV] ✗ Unexpected error: ${err.message}`);
   }
 }
 
