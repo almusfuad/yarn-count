@@ -1,12 +1,23 @@
 import { useState, useEffect } from 'react';
+import { useStore } from '../store/useStore';
+import { dummyTelegramStatus } from '../services/dummyData';
 import './TelegramNotifications.css';
 
 export default function TelegramNotifications() {
+  const isDummyMode = useStore((state) => state.isDummyMode);
   const [status, setStatus] = useState(null);
   const [notifyOn, setNotifyOn] = useState({});
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (isDummyMode) {
+      // Use dummy data in demo mode
+      setStatus(dummyTelegramStatus);
+      setNotifyOn(dummyTelegramStatus.notifyOn || {});
+      setLoading(false);
+      return;
+    }
+
     const fetchStatus = async () => {
       try {
         const response = await fetch('/api/telegram/status');
@@ -16,6 +27,9 @@ export default function TelegramNotifications() {
         setLoading(false);
       } catch (err) {
         console.error('Failed to fetch Telegram status:', err);
+        // Use dummy data as fallback
+        setStatus(dummyTelegramStatus);
+        setNotifyOn(dummyTelegramStatus.notifyOn || {});
         setLoading(false);
       }
     };
@@ -23,7 +37,7 @@ export default function TelegramNotifications() {
     fetchStatus();
     const interval = setInterval(fetchStatus, 10000);
     return () => clearInterval(interval);
-  }, []);
+  }, [isDummyMode]);
 
   const handleToggle = async (key) => {
     const updated = { ...notifyOn, [key]: !notifyOn[key] };

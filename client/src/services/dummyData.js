@@ -84,36 +84,70 @@ export const dummyEvents = [
   {
     id: 'event-1',
     timestamp: new Date(Date.now() - 2 * 60 * 1000).toISOString(),
-    source: 'F1-03',
+    machineId: 'F1-03',
+    source: 'Sensor',
     type: 'roll_completed',
     message: 'Roll completed (1389 count, 850kg)'
   },
   {
     id: 'event-2',
     timestamp: new Date(Date.now() - 5 * 60 * 1000).toISOString(),
-    source: 'F2-04',
+    machineId: 'F2-04',
+    source: 'Sensor',
     type: 'fault_detected',
     message: 'Sensor fault detected on roll count'
   },
   {
     id: 'event-3',
     timestamp: new Date(Date.now() - 8 * 60 * 1000).toISOString(),
-    source: 'F3-02',
+    machineId: 'F3-02',
+    source: 'Sensor',
     type: 'machine_status',
     message: 'Machine resumed from downtime'
   },
   {
     id: 'event-4',
     timestamp: new Date(Date.now() - 12 * 60 * 1000).toISOString(),
-    source: 'F1-06',
+    machineId: 'F1-06',
+    source: 'Sensor',
     type: 'setup_complete',
     message: 'Setup completed on machine'
   },
   {
     id: 'event-5',
     timestamp: new Date(Date.now() - 18 * 60 * 1000).toISOString(),
-    source: 'F2-02',
+    machineId: 'F2-02',
+    source: 'Sensor',
     type: 'roll_completed',
     message: 'Roll completed (1312 count, 920kg)'
   }
 ];
+
+export const dummyTelegramStatus = {
+  botName: '@KnittingAlertsBot',
+  channelName: 'Amantex Factory Alerts',
+  connected: true,
+  notifyOn: {
+    machineStop: true,
+    floorStop: true,
+    qualityFault: true,
+    shiftStart: false
+  },
+  recentMessages: [
+    {
+      text: '🔴 CRITICAL: F3-05 on Floor 3 stopped',
+      timestamp: new Date(Date.now() - 7 * 60 * 1000).toISOString(),
+      sent: true
+    },
+    {
+      text: '⚠️ WARNING: CNC-KNIT-01 stopped – no pulse',
+      timestamp: new Date(Date.now() - 15 * 60 * 1000).toISOString(),
+      sent: true
+    },
+    {
+      text: '⚠️ WARNING: F2-07 on Floor 2 stopped',
+      timestamp: new Date(Date.now() - 25 * 60 * 1000).toISOString(),
+      sent: true
+    }
+  ]
+};
