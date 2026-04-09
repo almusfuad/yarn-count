@@ -34,8 +34,8 @@ export default function Header() {
     <header className="header">
       <div className="header-content">
         <div className="header-left">
-          <h1 className="header-title">Production Monitoring Dashboard</h1>
-          <p className="header-subtitle">Roll & Kg Tracking · Real-Time Sensor Counts</p>
+          <h1 className="header-title">Amantex Ltd — Production Dashboard</h1>
+          <p className="header-subtitle">Floor Monitoring · Roll & Kg Tracking · Real-Time Sensor Counts · Alerts</p>
         </div>
 
         <div className="header-right">

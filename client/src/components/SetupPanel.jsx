@@ -95,22 +95,13 @@ export default function SetupPanel() {
               />
             </div>
             <div className="field-group">
-              <label>FLOOR TARGET</label>
+              <label>SHIFT</label>
               <input
-                type="number"
-                value={draft.floorTarget}
-                onChange={(e) => handleInputChange('floorTarget', Number(e.target.value))}
+                type="text"
+                value={draft.shift}
+                onChange={(e) => handleInputChange('shift', e.target.value)}
               />
             </div>
-          </div>
-
-          <div className="shift-field">
-            <label>SHIFT</label>
-            <input
-              type="text"
-              value={draft.shift}
-              onChange={(e) => handleInputChange('shift', e.target.value)}
-            />
           </div>
 
           <div className="setup-actions">
