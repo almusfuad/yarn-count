@@ -4,6 +4,8 @@ import './Header.css';
 
 export default function Header() {
   const connectionStatus = useStore((state) => state.connectionStatus);
+  const isDummyMode = useStore((state) => state.isDummyMode);
+  const setDummyMode = useStore((state) => state.setDummyMode);
   const session = useStore((state) => state.session);
   const alerts = useStore((state) => state.alerts);
   const [currentTime, setCurrentTime] = useState(new Date());
@@ -37,6 +39,14 @@ export default function Header() {
         </div>
 
         <div className="header-right">
+          <button
+            className={`mode-toggle ${isDummyMode ? 'mode-toggle--demo' : 'mode-toggle--live'}`}
+            onClick={() => setDummyMode(!isDummyMode)}
+            title={isDummyMode ? 'Switch to live data' : 'Switch to demo mode'}
+          >
+            {isDummyMode ? '⬤ Demo' : '⬤ Live'}
+          </button>
+
           <button className="notification-bell" title="View alerts">
             🔔
             {unackedCount > 0 && (

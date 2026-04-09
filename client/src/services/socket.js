@@ -2,6 +2,7 @@ import { useStore } from '../store/useStore';
 
 let ws = null;
 let reconnectTimeout = null;
+let preventReconnect = false;
 
 const WS_URL = `ws://${window.location.hostname}:3000`;
 
@@ -39,8 +40,8 @@ function connectWebSocket() {
   ws.onclose = () => {
     console.log('WebSocket disconnected');
     useStore.getState().setConnectionStatus('disconnected');
-    // Attempt to reconnect after 3 seconds
-    if (!reconnectTimeout) {
+    // Attempt to reconnect after 3 seconds (unless explicitly closed)
+    if (!reconnectTimeout && !preventReconnect) {
       reconnectTimeout = setTimeout(() => {
         connectWebSocket();
       }, 3000);
@@ -79,12 +80,14 @@ function handleMessage(type, payload) {
 }
 
 export function initSocket() {
+  preventReconnect = false;
   if (!ws || ws.readyState !== WebSocket.OPEN) {
     connectWebSocket();
   }
 }
 
 export function closeSocket() {
+  preventReconnect = true;
   if (ws) {
     ws.close();
     ws = null;

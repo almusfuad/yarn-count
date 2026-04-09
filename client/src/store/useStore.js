@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { dummyMachines, dummyKpis, dummyAlerts, dummyEvents } from '../services/dummyData';
 
 export const useStore = create((set) => ({
   connectionStatus: 'disconnected',
@@ -24,6 +25,7 @@ export const useStore = create((set) => ({
     timestamp: null
   },
   filter: 'ALL',
+  isDummyMode: false,
   session: {
     company: 'Amantex Ltd',
     asset: 'CNC-KNIT-01',
@@ -81,5 +83,49 @@ export const useStore = create((set) => ({
   clearOldAlerts: () =>
     set((state) => ({
       alerts: state.alerts.filter((a) => !a.acked)
+    })),
+
+  setDummyMode: (val) => set({ isDummyMode: val }),
+
+  loadDummyData: () =>
+    set(() => {
+      const machines = {};
+      dummyMachines.forEach((m) => {
+        machines[m.machineId] = m;
+      });
+      return {
+        machines,
+        kpis: { ...dummyKpis, timestamp: new Date().toISOString() },
+        alerts: [...dummyAlerts],
+        events: [...dummyEvents],
+        connectionStatus: 'demo'
+      };
+    }),
+
+  clearLiveData: () =>
+    set(() => ({
+      machines: {},
+      alerts: [],
+      events: [],
+      kpis: {
+        totalMachines: 0,
+        activeMachines: 0,
+        totalCount: 0,
+        totalRolls: 0,
+        totalDowntime: 0,
+        totalRuntime: 0,
+        totalRuntimeSeconds: 0,
+        totalKg: 0,
+        utilization: 0,
+        estimatedOutput: 0,
+        faultRate: 0,
+        totalFaults: 0,
+        criticalFaults: 0,
+        rollHistory: [],
+        qualityLogs: [],
+        timestamp: null
+      },
+      connectionStatus: 'disconnected',
+      isDummyMode: false
     }))
 }));

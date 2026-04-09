@@ -14,8 +14,23 @@ import EventLog from './components/EventLog';
 import './App.css';
 
 export default function App() {
+  const isDummyMode = useStore((state) => state.isDummyMode);
+  const loadDummyData = useStore((state) => state.loadDummyData);
+  const clearLiveData = useStore((state) => state.clearLiveData);
+
+  // Mode-switching effect
   useEffect(() => {
-    initSocket();
+    if (isDummyMode) {
+      closeSocket();
+      loadDummyData();
+    } else {
+      clearLiveData();
+      initSocket();
+    }
+  }, [isDummyMode, loadDummyData, clearLiveData]);
+
+  // Unmount cleanup
+  useEffect(() => {
     return () => closeSocket();
   }, []);
 
