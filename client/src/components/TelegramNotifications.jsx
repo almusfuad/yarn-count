@@ -5,6 +5,9 @@ import './TelegramNotifications.css';
 
 export default function TelegramNotifications() {
   const isDummyMode = useStore((state) => state.isDummyMode);
+  const notificationBadge = useStore((state) => state.notificationBadge);
+  const notificationMessages = useStore((state) => state.notificationMessages);
+  const clearNotificationBadges = useStore((state) => state.clearNotificationBadges);
   const [status, setStatus] = useState(null);
   const [notifyOn, setNotifyOn] = useState({});
   const [loading, setLoading] = useState(true);
@@ -54,6 +57,10 @@ export default function TelegramNotifications() {
     }
   };
 
+  const handleBadgeClick = () => {
+    clearNotificationBadges();
+  };
+
   const formatTime = (timestamp) => {
     if (!timestamp) return '';
     const date = new Date(timestamp);
@@ -69,13 +76,35 @@ export default function TelegramNotifications() {
     return <div className="telegram-notifications">Loading...</div>;
   }
 
-  const recentMessages = status.recentMessages || [];
+  const totalUnread = (notificationBadge.critical || 0) + (notificationBadge.warning || 0) + (notificationBadge.success || 0);
+  const displayMessages = isDummyMode ? notificationMessages : (status.recentMessages || []);
 
   return (
     <div className="telegram-notifications">
       <div className="tn-header">
         <div className="tn-title-row">
-          <span className="tn-icon">📱</span>
+          <div className="tn-icon-container">
+            <span className="tn-icon">📱</span>
+            {totalUnread > 0 && (
+              <button className="tn-badge-container" onClick={handleBadgeClick}>
+                {notificationBadge.critical > 0 && (
+                  <span className="tn-badge critical" title="Click to clear">
+                    🔴 {notificationBadge.critical}
+                  </span>
+                )}
+                {notificationBadge.warning > 0 && (
+                  <span className="tn-badge warning" title="Click to clear">
+                    ⚠️ {notificationBadge.warning}
+                  </span>
+                )}
+                {notificationBadge.success > 0 && (
+                  <span className="tn-badge success" title="Click to clear">
+                    ✅ {notificationBadge.success}
+                  </span>
+                )}
+              </button>
+            )}
+          </div>
           <h3 className="tn-title">Telegram Notifications</h3>
           <span className="tn-bot-pill">{status.botName}</span>
         </div>
@@ -133,12 +162,12 @@ export default function TelegramNotifications() {
 
       <div className="tn-messages-label">Recent Messages</div>
       <div className="tn-messages-list">
-        {recentMessages.length > 0 ? (
-          recentMessages.map((msg, idx) => {
-            const isCritical = msg.text.includes('🔴') || msg.text.includes('CRITICAL');
+        {displayMessages.length > 0 ? (
+          displayMessages.map((msg) => {
+            const isCritical = msg.text?.includes('🔴') || msg.severity === 'critical' || msg.text?.includes('CRITICAL');
             return (
               <div
-                key={idx}
+                key={msg.id || msg.timestamp}
                 className={`tn-message-entry ${isCritical ? 'critical' : 'warning'}`}
               >
                 <div className="tn-message-text">{msg.text}</div>

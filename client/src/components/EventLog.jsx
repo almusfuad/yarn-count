@@ -26,10 +26,12 @@ export default function EventLog() {
 
   const getEventType = (type) => {
     const typeMap = {
-      'roll_completed': 'roll_completed',
-      'fault_detected': 'fault_detected',
-      'machine_status': 'machine_status',
-      'setup_complete': 'setup_complete'
+      'roll_completed': 'Roll Completed',
+      'fault_detected': 'Fault Detected',
+      'machine_status': 'Machine Status',
+      'setup_complete': 'Setup Complete',
+      'machine_online': 'Machine Online',
+      'machine_stopped': 'Machine Stopped'
     };
     return typeMap[type] || type;
   };
@@ -56,17 +58,29 @@ export default function EventLog() {
 
         <div className="event-list">
           {filtered.length > 0 ? (
-            filtered.map((event, idx) => (
-              <div key={idx} className="event-row">
-                <div className="event-col-time">{formatTime(event.timestamp)}</div>
-                <div className="event-col-event">
-                  <span className="event-badge">{getEventType(event.type)}</span>
+            filtered.map((event, idx) => {
+              const isOnlineEvent = event.type === 'machine_online';
+              const isStoppedEvent = event.type === 'machine_stopped';
+              return (
+                <div 
+                  key={idx} 
+                  className={`event-row ${isOnlineEvent ? 'event-online' : isStoppedEvent ? 'event-stopped' : ''}`}
+                >
+                  <div className="event-col-time">{formatTime(event.timestamp)}</div>
+                  <div className="event-col-event">
+                    <div className="event-badge-wrapper">
+                      <span className={`event-badge ${isOnlineEvent ? 'online' : isStoppedEvent ? 'stopped' : ''}`}>
+                        {getEventType(event.type)}
+                      </span>
+                      {event.message && <span className="event-message">{event.message}</span>}
+                    </div>
+                  </div>
+                  <div className="event-col-source">
+                    <span className="event-source-badge">{event.source}</span>
+                  </div>
                 </div>
-                <div className="event-col-source">
-                  <span className="event-source-badge">{event.source}</span>
-                </div>
-              </div>
-            ))
+              );
+            })
           ) : (
             <div className="no-events">No events</div>
           )}

@@ -14,11 +14,17 @@ const FLOOR_COLORS = {
   F3: 'linear-gradient(135deg, #7c3aed, #a78bfa)'
 };
 
-const FLOOR_BAR_COLORS = {
-  F1: '#6f42c1',
-  F2: '#0891b2',
-  F3: '#7c3aed',
-  Overall: '#374151'
+// Helper function to get bar color based on percentage
+const getProgressColor = (percentage) => {
+  if (percentage < 30) {
+    return '#ef4444'; // Red - Low progress
+  } else if (percentage < 70) {
+    return '#f59e0b'; // Amber/Orange - Medium progress
+  } else if (percentage <= 100) {
+    return '#10b981'; // Green - High progress
+  } else {
+    return '#3b82f6'; // Blue - Over target
+  }
 };
 
 const formatDuration = (seconds) => {
@@ -181,6 +187,7 @@ export default function ProductionFloorOverview() {
             const floorMachines = floorData.floors[floorKey];
             const stats = getFloorStats(floorMachines);
             const percentage = calculateProgressPercentage(stats.liveCount, floorData.floorTarget);
+            const barColor = getProgressColor(percentage);
 
             return (
               <div key={floorKey} className="pfo-bar-row">
@@ -190,11 +197,11 @@ export default function ProductionFloorOverview() {
                     className="pfo-bar-fill"
                     style={{
                       width: `${percentage}%`,
-                      backgroundColor: FLOOR_BAR_COLORS[floorKey]
+                      backgroundColor: barColor
                     }}
                   ></div>
                 </div>
-                <div className="pfo-bar-percentage" style={{ color: FLOOR_BAR_COLORS[floorKey] }}>
+                <div className="pfo-bar-percentage" style={{ color: barColor }}>
                   {percentage.toFixed(1)}%
                 </div>
                 <div className="pfo-bar-count">
@@ -211,11 +218,11 @@ export default function ProductionFloorOverview() {
                 className="pfo-bar-fill"
                 style={{
                   width: `${overallPercentage}%`,
-                  backgroundColor: FLOOR_BAR_COLORS.Overall
+                  backgroundColor: getProgressColor(overallPercentage)
                 }}
               ></div>
             </div>
-            <div className="pfo-bar-percentage" style={{ color: FLOOR_BAR_COLORS.Overall }}>
+            <div className="pfo-bar-percentage" style={{ color: getProgressColor(overallPercentage) }}>
               {overallPercentage.toFixed(1)}%
             </div>
             <div className="pfo-bar-count">

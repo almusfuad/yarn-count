@@ -49,10 +49,25 @@ const AlertRow = ({ alert, onAck }) => {
 };
 
 export default function KpiCards() {
-  const kpis = useStore((state) => state.kpis);
+  const machines = useStore((state) => state.machines);
   const alerts = useStore((state) => state.alerts);
   const session = useStore((state) => state.session);
   const ackAlert = useStore((state) => state.ackAlert);
+
+  // Calculate KPIs from real-time machine data
+  const calculatedKpis = useMemo(() => {
+    const machineArray = Object.values(machines);
+    const totalCount = machineArray.reduce((sum, m) => sum + (m.totalCount || 0), 0);
+    const activeMachines = machineArray.filter((m) => m.status === 'ON').length;
+    const totalMachines = machineArray.length;
+    const totalRuntime = machineArray.reduce((sum, m) => sum + (m.runtimeSeconds || 0), 0);
+    const totalDowntime = machineArray.reduce((sum, m) => sum + (m.downtimeSeconds || 0), 0);
+    const totalRolls = machineArray.reduce((sum, m) => sum + (m.rollsCompleted || 0), 0);
+    const totalKg = totalRolls * 0.7;
+    const utilization = totalRuntime + totalDowntime > 0 ? (totalRuntime / (totalRuntime + totalDowntime)) * 100 : 0;
+    
+    return { totalCount, activeMachines, totalMachines, totalRuntime, totalDowntime, totalRolls, totalKg, utilization };
+  }, [machines]);
 
   const unackedAlerts = useMemo(() => alerts.filter((a) => !a.acked), [alerts]);
   const criticalAlerts = useMemo(() => unackedAlerts.filter((a) => a.severity === 'critical'), [
@@ -63,35 +78,35 @@ export default function KpiCards() {
     {
       icon: '🏭',
       label: 'Total Machines',
-      value: kpis.totalMachines || 0,
+      value: calculatedKpis.totalMachines || 0,
       sublabel: 'Across all 3 floors',
       color: '#3b82f6'
     },
     {
       icon: '✓',
       label: 'Running',
-      value: kpis.activeMachines || 0,
-      sublabel: `${kpis.utilization?.toFixed(1) || 0}% capacity`,
+      value: calculatedKpis.activeMachines || 0,
+      sublabel: `${((calculatedKpis.activeMachines || 0) / (calculatedKpis.totalMachines || 1) * 100).toFixed(1)}% capacity`,
       color: '#10b981'
     },
     {
       icon: '●',
       label: 'Stopped',
-      value: (kpis.totalMachines || 0) - (kpis.activeMachines || 0),
+      value: (calculatedKpis.totalMachines || 0) - (calculatedKpis.activeMachines || 0),
       sublabel: 'Require attention',
       color: '#ef4444'
     },
     {
       icon: '🎱',
       label: 'Rolls Produced',
-      value: kpis.totalRolls || 0,
+      value: calculatedKpis.totalRolls || 0,
       sublabel: `${unackedAlerts.length} pending tasks`,
       color: '#8b5cf6'
     },
     {
       icon: '⚖️',
       label: 'Total Kg',
-      value: `${(kpis.totalKg || 0).toFixed(2)} kg`,
+      value: `${(calculatedKpis.totalKg || 0).toFixed(2)} kg`,
       sublabel: `${unackedAlerts.length} rolls weighed`,
       color: '#f59e0b'
     },
@@ -104,7 +119,7 @@ export default function KpiCards() {
     }
   ];
 
-  const currentCount = kpis.totalCount % session.rollTarget;
+  const currentCount = calculatedKpis.totalCount % session.rollTarget;
   const remaining = session.rollTarget - currentCount;
   const rollProgress = ((currentCount / session.rollTarget) * 100).toFixed(1);
 
@@ -112,8 +127,8 @@ export default function KpiCards() {
     {
       icon: '📊',
       label: 'Live Count',
-      value: (kpis.totalCount || 0).toLocaleString(),
-      sublabel: `Roll #${Math.floor((kpis.totalCount || 0) / session.rollTarget) + 1}`,
+      value: (calculatedKpis.totalCount || 0).toLocaleString(),
+      sublabel: `Roll #${Math.floor((calculatedKpis.totalCount || 0) / session.rollTarget) + 1}`,
       color: '#8b5cf6'
     },
     {
@@ -140,30 +155,30 @@ export default function KpiCards() {
     {
       icon: '🎱',
       label: 'Rolls Produced',
-      value: (kpis.totalRolls || 0).toLocaleString(),
+      value: (calculatedKpis.totalRolls || 0).toLocaleString(),
       sublabel: `${unackedAlerts.length} pending weight`,
       color: '#10b981'
     },
     {
       icon: '⚖️',
       label: 'Total Kg',
-      value: `${(kpis.totalKg || 0).toFixed(2)} kg`,
+      value: `${(calculatedKpis.totalKg || 0).toFixed(2)} kg`,
       sublabel: `${unackedAlerts.length} rolls weighed`,
       color: '#f59e0b'
     },
     {
       icon: '⏱️',
       label: 'Runtime',
-      value: `${Math.floor((kpis.totalRuntimeSeconds || 0) / 3600)}h ${Math.floor(((kpis.totalRuntimeSeconds || 0) % 3600) / 60)}m`,
-      sublabel: `Downtime: ${Math.floor((kpis.totalDowntime || 0) / 60)}m`,
+      value: `${Math.floor((calculatedKpis.totalRuntime || 0) / 3600)}h ${Math.floor(((calculatedKpis.totalRuntime || 0) % 3600) / 60)}m`,
+      sublabel: `Downtime: ${Math.floor((calculatedKpis.totalDowntime || 0) / 60)}m`,
       color: '#10b981'
     },
     {
-      icon: kpis.activeMachines > 0 ? '▶️' : '⏸️',
+      icon: calculatedKpis.activeMachines > 0 ? '▶️' : '⏸️',
       label: 'Status',
-      value: kpis.activeMachines > 0 ? 'Running' : 'Stopped',
-      sublabel: `Util: ${kpis.utilization?.toFixed(1) || 0}%`,
-      color: kpis.activeMachines > 0 ? '#10b981' : '#ef4444'
+      value: calculatedKpis.activeMachines > 0 ? 'Running' : 'Stopped',
+      sublabel: `Util: ${calculatedKpis.utilization?.toFixed(1) || 0}%`,
+      color: calculatedKpis.activeMachines > 0 ? '#10b981' : '#ef4444'
     }
   ];
 

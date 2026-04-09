@@ -60,6 +60,8 @@ function handleMessage(type, payload) {
 
     case 'machine_update':
       store.updateMachine(payload.machineId, payload);
+      // Recalculate KPIs after each machine update to keep them in sync
+      store.calculateKpis();
       break;
 
     case 'alert':

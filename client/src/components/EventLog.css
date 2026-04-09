@@ -112,6 +112,37 @@
   white-space: nowrap;
 }
 
+.event-badge.online {
+  background: #10b981;
+  color: white;
+}
+
+.event-badge.stopped {
+  background: #ef4444;
+  color: white;
+}
+
+.event-badge-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.event-message {
+  font-size: 11px;
+  color: #6b7280;
+  font-style: italic;
+  display: block;
+}
+
+.event-row.event-online {
+  background-color: #f0fdf4;
+}
+
+.event-row.event-stopped {
+  background-color: #fef2f2;
+}
+
 .event-source-badge {
   display: inline-block;
   background: #ec4899;

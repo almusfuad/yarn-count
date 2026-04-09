@@ -3,9 +3,12 @@ import './RollProgress.css';
 
 export default function RollProgress() {
   const session = useStore((state) => state.session);
+  const machines = useStore((state) => state.machines);
   const kpis = useStore((state) => state.kpis);
 
-  const currentCount = kpis.totalCount % session.rollTarget;
+  // Calculate totalCount from real-time machines data
+  const totalCountFromMachines = Object.values(machines).reduce((sum, m) => sum + (m.totalCount || 0), 0);
+  const currentCount = (totalCountFromMachines || kpis.totalCount || 0) % session.rollTarget;
   const percentage = ((currentCount / session.rollTarget) * 100).toFixed(1);
   const remaining = session.rollTarget - currentCount;
 

@@ -5,6 +5,7 @@ services:
     build: .
     ports:
       - "3000:3000"
+    env_file: .env
     environment:
       PORT: "3000"
       MQTT_BROKER: "mqtt://152.42.238.142:1883"

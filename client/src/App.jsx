@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { useStore } from './store/useStore';
 import { initSocket, closeSocket } from './services/socket';
+import { startDummyUpdates, stopDummyUpdates } from './services/dummyUpdater';
 import Header from './components/Header';
 import SetupPanel from './components/SetupPanel';
 import KpiCards from './components/KpiCards';
@@ -23,7 +24,9 @@ export default function App() {
     if (isDummyMode) {
       closeSocket();
       loadDummyData();
+      startDummyUpdates();
     } else {
+      stopDummyUpdates();
       clearLiveData();
       initSocket();
     }
@@ -31,7 +34,10 @@ export default function App() {
 
   // Unmount cleanup
   useEffect(() => {
-    return () => closeSocket();
+    return () => {
+      closeSocket();
+      stopDummyUpdates();
+    };
   }, []);
 
   return (
