@@ -1,5 +1,4 @@
 import { useStore } from '../store/useStore';
-import './RollHistory.css';
 
 export default function RollHistory() {
   const kpis = useStore((state) => state.kpis);
@@ -21,11 +20,11 @@ export default function RollHistory() {
 
   if (rollHistory.length === 0) {
     return (
-      <div className="roll-history">
-        <div className="rh-header">
-          <div className="rh-title">Roll History</div>
-          <div className="rh-stats">
-            <span className="rh-empty">No rolls completed yet</span>
+      <div className="bg-white rounded-xs shadow-sm p-5 mb-6">
+        <div className="flex justify-between items-center">
+          <div className="font-bold text-neutral-900">Roll History</div>
+          <div className="flex gap-2 items-center">
+            <span className="text-neutral-400 text-sm">No rolls completed yet</span>
           </div>
         </div>
       </div>
@@ -33,48 +32,52 @@ export default function RollHistory() {
   }
 
   return (
-    <div className="roll-history">
-      <div className="rh-header">
-        <div className="rh-title">Roll History</div>
-        <div className="rh-stats">
-          <span className="rh-badge">{rollHistory.length} rolls</span>
+    <div className="bg-white rounded-xs shadow-sm p-5 mb-6 w-full">
+      <div className="flex justify-between items-center mb-4">
+        <div className="font-bold text-neutral-900">Roll History</div>
+        <div className="flex gap-2 items-center">
+              <span className="bg-neutral-200 text-neutral-700 px-2.5 py-1 rounded-xs text-xs font-bold">
+            {rollHistory.length} rolls
+          </span>
           {pendingWeightCount > 0 && (
-            <span className="rh-badge pending">{pendingWeightCount} pending weight</span>
+              <span className="bg-yellow-100 text-yellow-700 px-2.5 py-1 rounded-xs text-xs font-bold">
+              {pendingWeightCount} pending
+            </span>
           )}
-          <span className="rh-total">Total: {totalKg.toFixed(2)} kg</span>
+          <span className="text-neutral-600 text-sm">Total: {totalKg.toFixed(2)} kg</span>
         </div>
       </div>
 
-      <table className="rh-table">
+      <table className="w-full text-sm border-collapse">
         <thead>
-          <tr>
-            <th>Roll #</th>
-            <th>Completed At</th>
-            <th>Count</th>
-            <th>Actual Kg</th>
-            <th>Duration</th>
-            <th>Status</th>
+          <tr className="border-b border-neutral-200">
+            <th className="text-left px-3 py-2 font-semibold text-neutral-600">Roll #</th>
+            <th className="text-left px-3 py-2 font-semibold text-neutral-600">Completed At</th>
+            <th className="text-left px-3 py-2 font-semibold text-neutral-600">Count</th>
+            <th className="text-left px-3 py-2 font-semibold text-neutral-600">Actual Kg</th>
+            <th className="text-left px-3 py-2 font-semibold text-neutral-600">Duration</th>
+            <th className="text-left px-3 py-2 font-semibold text-neutral-600">Status</th>
           </tr>
         </thead>
         <tbody>
           {rollHistory.map((roll) => (
-            <tr key={roll.rollNumber}>
-              <td className="rh-roll-num">Roll #{roll.rollNumber}</td>
-              <td>{formatTime(roll.completedAt)}</td>
-              <td>{roll.count}</td>
-              <td>
+            <tr key={roll.rollNumber} className="border-b border-neutral-150 hover:bg-neutral-50">
+              <td className="px-3 py-2 font-bold text-neutral-900">Roll #{roll.rollNumber}</td>
+              <td className="px-3 py-2 text-neutral-600">{formatTime(roll.completedAt)}</td>
+              <td className="px-3 py-2 text-neutral-600">{roll.count}</td>
+              <td className="px-3 py-2">
                 {roll.weighed ? (
-                  <span className="rh-kg">{roll.weight} kg</span>
+                  <span className="text-neutral-900 font-semibold">{roll.weight} kg</span>
                 ) : (
-                  <span className="rh-not-entered">Not entered</span>
+                  <span className="text-neutral-400">Not entered</span>
                 )}
               </td>
-              <td>—</td>
-              <td>
+              <td className="px-3 py-2">—</td>
+              <td className="px-3 py-2">
                 {roll.weighed ? (
-                  <span className="rh-status-badge weighed">Weighed</span>
+                  <span className="bg-emerald-100 text-emerald-700 px-2 py-1 rounded-xs text-xs font-semibold">Weighed</span>
                 ) : (
-                  <span className="rh-status-badge pending-wt">Pending Weight</span>
+                  <span className="bg-yellow-100 text-yellow-700 px-2 py-1 rounded-xs text-xs font-semibold">Pending Weight</span>
                 )}
               </td>
             </tr>

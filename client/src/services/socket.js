@@ -4,7 +4,7 @@ let ws = null;
 let reconnectTimeout = null;
 let preventReconnect = false;
 
-const WS_URL = `ws://${window.location.hostname}:3000`;
+const WS_URL = `ws://${window.location.hostname}:5000`;
 
 function connectWebSocket() {
   if (ws?.readyState === WebSocket.OPEN) {

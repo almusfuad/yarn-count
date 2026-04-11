@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useStore } from '../store/useStore';
-import './QualityControl.css';
+
 
 const FAULT_TYPES = ['Yarn Breakage', 'Dropped Stitch', 'Tension Error', 'Yarn Contamination', 'Knot', 'Other'];
 const SEVERITIES = ['Critical', 'Major', 'Minor'];
@@ -95,47 +95,47 @@ export default function QualityControl() {
   const faultRate = (kpis.totalCount || 0) > 0 ? ((totalFaults / (kpis.totalCount || 1)) * 1000).toFixed(2) : '0.00';
 
   return (
-    <div className="quality-control">
-      <h3 className="qc-title">Quality Control</h3>
+    <div className="flex flex-col gap-5 mb-6">
+      <h3 className="text-base font-bold text-neutral-900 m-0">Quality Control</h3>
 
-      <div className="qc-kpi-row">
-        <div className="qc-kpi-card">
-          <div className="qc-kpi-icon">🔍</div>
-          <div className="qc-kpi-content">
-            <div className="qc-kpi-value">{totalFaults}</div>
-            <div className="qc-kpi-label">Total Faults</div>
-            <div className="qc-kpi-sublabel">This shift</div>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="bg-white rounded-xs shadow-sm p-4 flex items-start gap-4">
+          <div className="text-2xl">🔍</div>
+          <div className="flex-1">
+            <div className="text-2xl font-bold text-neutral-900">{totalFaults}</div>
+            <div className="text-xs font-semibold uppercase text-neutral-600">Total Faults</div>
+            <div className="text-xs text-neutral-500">This shift</div>
           </div>
         </div>
 
-        <div className="qc-kpi-card">
-          <div className="qc-kpi-icon">🚨</div>
-          <div className="qc-kpi-content">
-            <div className="qc-kpi-value">{criticalFaults}</div>
-            <div className="qc-kpi-label">Critical Faults</div>
-            <div className="qc-kpi-sublabel">Immediate action</div>
+        <div className="bg-white rounded-xs shadow-sm p-4 flex items-start gap-4">
+          <div className="text-2xl">🚨</div>
+          <div className="flex-1">
+            <div className="text-2xl font-bold text-neutral-900">{criticalFaults}</div>
+            <div className="text-xs font-semibold uppercase text-neutral-600">Critical Faults</div>
+            <div className="text-xs text-neutral-500">Immediate action</div>
           </div>
         </div>
 
-        <div className="qc-kpi-card">
-          <div className="qc-kpi-icon">📉</div>
-          <div className="qc-kpi-content">
-            <div className="qc-kpi-value">{faultRate}</div>
-            <div className="qc-kpi-label">Fault Rate</div>
-            <div className="qc-kpi-sublabel">Per 1,000 units</div>
+        <div className="bg-white rounded-xs shadow-sm p-4 flex items-start gap-4">
+          <div className="text-2xl">📉</div>
+          <div className="flex-1">
+            <div className="text-2xl font-bold text-neutral-900">{faultRate}</div>
+            <div className="text-xs font-semibold uppercase text-neutral-600">Fault Rate</div>
+            <div className="text-xs text-neutral-500">Per 1,000 units</div>
           </div>
         </div>
       </div>
 
-      <div className="qc-content">
-        <div className="qc-left-card">
-          <h4 className="qc-card-title">Log Quality Fault</h4>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        <div className="bg-white rounded-xs shadow-sm p-5">
+          <h4 className="text-base font-bold text-neutral-900 m-0 mb-4">Log Quality Fault</h4>
 
-          <form onSubmit={handleSubmit} className="qc-form">
-            <div className="qc-form-row">
-              <div className="qc-form-group">
-                <label className="qc-label">
-                  Floor <span className="qc-required">*</span>
+          <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-bold uppercase text-neutral-500 mb-2">
+                  Floor <span className="text-red-600">*</span>
                 </label>
                 <select
                   value={selectedFloor}
@@ -143,7 +143,7 @@ export default function QualityControl() {
                     setSelectedFloor(e.target.value);
                     setSelectedMachine('');
                   }}
-                  className="qc-select"
+                  className="w-full px-3 py-2 border border-neutral-300 rounded-xs text-sm font-inherit focus:outline-none focus:border-indigo-600 focus:ring-2 focus:ring-indigo-100"
                 >
                   <option value="">— Floor —</option>
                   {uniqueFloors.map((floor) => (
@@ -154,14 +154,14 @@ export default function QualityControl() {
                 </select>
               </div>
 
-              <div className="qc-form-group">
-                <label className="qc-label">
-                  Machine <span className="qc-required">*</span>
+              <div>
+                <label className="block text-xs font-bold uppercase text-neutral-500 mb-2">
+                  Machine <span className="text-red-600">*</span>
                 </label>
                 <select
                   value={selectedMachine}
                   onChange={(e) => setSelectedMachine(e.target.value)}
-                  className="qc-select"
+                  className="w-full px-3 py-2 border border-neutral-300 rounded-xs text-sm font-inherit focus:outline-none focus:border-indigo-600 focus:ring-2 focus:ring-indigo-100 disabled:bg-neutral-100 disabled:text-neutral-400 disabled:cursor-not-allowed"
                   disabled={!selectedFloor}
                 >
                   <option value="">— Machine —</option>
@@ -174,15 +174,15 @@ export default function QualityControl() {
               </div>
             </div>
 
-            <div className="qc-form-row">
-              <div className="qc-form-group">
-                <label className="qc-label">
-                  Fault Type <span className="qc-required">*</span>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-bold uppercase text-neutral-500 mb-2">
+                  Fault Type <span className="text-red-600">*</span>
                 </label>
                 <select
                   value={faultType}
                   onChange={(e) => setFaultType(e.target.value)}
-                  className="qc-select"
+                  className="w-full px-3 py-2 border border-neutral-300 rounded-xs text-sm font-inherit focus:outline-none focus:border-indigo-600 focus:ring-2 focus:ring-indigo-100"
                 >
                   <option value="">— Type —</option>
                   {FAULT_TYPES.map((type) => (
@@ -193,14 +193,14 @@ export default function QualityControl() {
                 </select>
               </div>
 
-              <div className="qc-form-group">
-                <label className="qc-label">
-                  Severity <span className="qc-required">*</span>
+              <div>
+                <label className="block text-xs font-bold uppercase text-neutral-500 mb-2">
+                  Severity <span className="text-red-600">*</span>
                 </label>
                 <select
                   value={severity}
                   onChange={(e) => setSeverity(e.target.value)}
-                  className="qc-select"
+                  className="w-full px-3 py-2 border border-neutral-300 rounded-xs text-sm font-inherit focus:outline-none focus:border-indigo-600 focus:ring-2 focus:ring-indigo-100"
                 >
                   <option value="">— Severity —</option>
                   {SEVERITIES.map((sev) => (
@@ -212,23 +212,23 @@ export default function QualityControl() {
               </div>
             </div>
 
-            <div className="qc-form-group">
-              <label className="qc-label">Description (Optional)</label>
+            <div>
+              <label className="block text-xs font-bold uppercase text-neutral-500 mb-2">Description (Optional)</label>
               <textarea
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="Describe the fault..."
-                className="qc-textarea"
+                className="w-full px-3 py-2 border border-neutral-300 rounded-xs text-sm font-inherit focus:outline-none focus:border-purple-600 focus:ring-2 focus:ring-purple-100 resize-vertical min-h-20 sm:min-h-24"
               />
             </div>
 
-            <button type="submit" className="qc-submit-btn">
+            <button type="submit" className="w-full px-3 sm:px-4 py-2 sm:py-2.5 bg-purple-600 text-white border-0 rounded-xs text-sm font-semibold cursor-pointer transition-all hover:bg-purple-700 hover:-translate-y-px">
               {submitted ? '✓ Logged' : 'Submit Fault Report'}
             </button>
 
-            <div className="qc-info-strip">
-              <span className="qc-info-icon">⚠</span>
-              <span className="qc-info-text">
+            <div className="flex gap-2 p-3 bg-amber-50 rounded-xs text-xs text-amber-700">
+              <span className="shrink-0 font-bold">⚠</span>
+              <span>
                 Critical faults trigger an <strong>in-app alert</strong> and{' '}
                 <strong>Telegram notification</strong> automatically.
               </span>
@@ -236,21 +236,22 @@ export default function QualityControl() {
           </form>
         </div>
 
-        <div className="qc-right-card">
-          <div className="qc-card-header">
-            <h4 className="qc-card-title">Fault Log</h4>
-            <span className="qc-log-badge">{totalFaults}</span>
+        <div className="bg-white rounded-xs shadow-sm p-3 sm:p-4 md:p-5">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-3 sm:mb-4 gap-2 sm:gap-0">
+            <h4 className="text-base font-bold text-neutral-900 m-0">Fault Log</h4>
+            <span className="px-2.5 py-1 bg-neutral-200 text-neutral-700 rounded-xs text-xs font-bold">{totalFaults}</span>
           </div>
 
-          <table className="qc-table">
+          <div className="overflow-x-auto -mx-3 sm:mx-0 sm:overflow-x-visible">
+            <table className="w-full text-sm border-collapse">
             <thead>
-              <tr>
-                <th>Time</th>
-                <th>Floor</th>
-                <th>Machine</th>
-                <th>Fault Type</th>
-                <th>Severity</th>
-                <th>Notes</th>
+              <tr className="border-b border-neutral-200">
+                <th className="text-left px-3 py-2 font-semibold text-neutral-600">Time</th>
+                <th className="text-left px-3 py-2 font-semibold text-neutral-600">Floor</th>
+                <th className="text-left px-3 py-2 font-semibold text-neutral-600">Machine</th>
+                <th className="text-left px-3 py-2 font-semibold text-neutral-600">Fault Type</th>
+                <th className="text-left px-3 py-2 font-semibold text-neutral-600">Severity</th>
+                <th className="text-left px-3 py-2 font-semibold text-neutral-600">Notes</th>
               </tr>
             </thead>
             <tbody>
@@ -261,30 +262,30 @@ export default function QualityControl() {
                   const severityStyle = getSeverityBadgeStyle(log.severity || 'minor');
 
                   return (
-                    <tr key={idx}>
-                      <td>{formatTime(log.timestamp)}</td>
-                      <td>
+                    <tr key={idx} className="border-b border-neutral-150 hover:bg-neutral-50">
+                      <td className="px-3 py-2 text-neutral-600">{formatTime(log.timestamp)}</td>
+                      <td className="px-3 py-2">
                         {pillClass && (
                           <span
-                            className="qc-floor-pill"
+                            className="px-2 py-1 rounded-xs text-xs font-semibold"
                             style={{ background: pillClass.bg, color: pillClass.color }}
                           >
                             {floorKey}
                           </span>
                         )}
                       </td>
-                      <td className="qc-machine-cell">{log.machineId || '—'}</td>
-                      <td>{log.faultType || '—'}</td>
-                      <td>
+                      <td className="px-3 py-2 text-neutral-600">{log.machineId || '—'}</td>
+                      <td className="px-3 py-2 text-neutral-600">{log.faultType || '—'}</td>
+                      <td className="px-3 py-2">
                         <span
-                          className="qc-severity-badge"
+                          className="px-2 py-1 rounded text-xs font-semibold"
                           style={{ background: severityStyle.bg, color: severityStyle.color }}
                         >
                           {(log.severity || 'minor').charAt(0).toUpperCase() +
                             (log.severity || 'minor').slice(1)}
                         </span>
                       </td>
-                      <td className="qc-notes">
+                      <td className="px-3 py-2 text-neutral-600 max-w-xs truncate">
                         {log.description ? log.description.substring(0, 25) + (log.description.length > 25 ? '...' : '') : '—'}
                       </td>
                     </tr>
@@ -292,13 +293,14 @@ export default function QualityControl() {
                 })
               ) : (
                 <tr>
-                  <td colSpan="6" className="qc-empty">
+                  <td colSpan="6" className="text-center py-8 text-neutral-400">
                     No faults logged yet
                   </td>
                 </tr>
               )}
             </tbody>
           </table>
+          </div>
         </div>
       </div>
     </div>

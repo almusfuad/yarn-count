@@ -1,6 +1,5 @@
 import { useStore } from '../store/useStore';
 import MachineCard from './MachineCard';
-import './MachineGrid.css';
 
 export default function MachineGrid() {
   const machines = useStore((state) => state.machines);
@@ -15,39 +14,55 @@ export default function MachineGrid() {
   });
 
   return (
-    <div className="machine-grid-container">
-      <div className="filter-buttons">
+    <div className="flex flex-col gap-3.75">
+      <div className="flex gap-2.5 flex-wrap">
         <button
-          className={`filter-btn ${filter === 'ALL' ? 'active' : ''}`}
+          className={`px-4 py-2 border rounded-full cursor-pointer text-sm font-semibold transition-all ${
+            filter === 'ALL'
+              ? 'bg-indigo-600 text-white border-indigo-600'
+              : 'bg-white text-neutral-500 border-neutral-300 hover:border-indigo-600 hover:text-indigo-600'
+          }`}
           onClick={() => setFilter('ALL')}
         >
           All ({machinesArray.length})
         </button>
         <button
-          className={`filter-btn ${filter === 'ON' ? 'active' : ''}`}
+          className={`px-4 py-2 border rounded-full cursor-pointer text-sm font-semibold transition-all ${
+            filter === 'ON'
+              ? 'bg-indigo-600 text-white border-indigo-600'
+              : 'bg-white text-neutral-500 border-neutral-300 hover:border-indigo-600 hover:text-indigo-600'
+          }`}
           onClick={() => setFilter('ON')}
         >
           Running ({machinesArray.filter((m) => m.status === 'ON').length})
         </button>
         <button
-          className={`filter-btn ${filter === 'OFF' ? 'active' : ''}`}
+          className={`px-4 py-2 border rounded-full cursor-pointer text-sm font-semibold transition-all ${
+            filter === 'OFF'
+              ? 'bg-indigo-600 text-white border-indigo-600'
+              : 'bg-white text-neutral-500 border-neutral-300 hover:border-indigo-600 hover:text-indigo-600'
+          }`}
           onClick={() => setFilter('OFF')}
         >
           Off ({machinesArray.filter((m) => m.status === 'OFF').length})
         </button>
         <button
-          className={`filter-btn ${filter === 'STOPPED' ? 'active' : ''}`}
+          className={`px-4 py-2 border rounded-full cursor-pointer text-sm font-semibold transition-all ${
+            filter === 'STOPPED'
+              ? 'bg-indigo-600 text-white border-indigo-600'
+              : 'bg-white text-neutral-500 border-neutral-300 hover:border-indigo-600 hover:text-indigo-600'
+          }`}
           onClick={() => setFilter('STOPPED')}
         >
           Stopped ({machinesArray.filter((m) => m.status === 'STOPPED').length})
         </button>
       </div>
 
-      <div className="machine-grid">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3.75">
         {filtered.length > 0 ? (
           filtered.map((machine) => <MachineCard key={machine.machineId} machine={machine} />)
         ) : (
-          <div className="no-machines">No machines found</div>
+          <div className="text-center py-10 px-5 text-neutral-400 text-base">No machines found</div>
         )}
       </div>
     </div>

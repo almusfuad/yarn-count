@@ -12,7 +12,6 @@ import ProductionFloorOverview from './components/ProductionFloorOverview';
 import QualityControl from './components/QualityControl';
 import TelegramNotifications from './components/TelegramNotifications';
 import EventLog from './components/EventLog';
-import './App.css';
 
 export default function App() {
   const isDummyMode = useStore((state) => state.isDummyMode);
@@ -41,23 +40,25 @@ export default function App() {
   }, []);
 
   return (
-    <div className="app-container">
+    <div className="flex flex-col min-h-screen w-screen bg-neutral-100 gap-2 sm:gap-4">
       <Header />
       
-      <main className="main-content">
-        <SetupPanel />
-        <section className="dashboard-section">
-          <KpiCards />
-          <RollProgress />
-          <RollHistory />
-          <DowntimePanel />
-          <ProductionFloorOverview />
-          <QualityControl />
-          <div className="bottom-row">
-            <TelegramNotifications />
-            <EventLog />
-          </div>
-      </section>
+      <main className="flex-1 w-full px-2 sm:px-3 md:px-4 py-2 sm:py-3 md:py-4">
+        <div className="max-w-full lg:max-w-7xl mx-auto w-full">
+          <SetupPanel />
+          <section className="mt-2 sm:mt-3 md:mt-4 mb-2 sm:mb-3 md:mb-4">
+            <KpiCards />
+            <RollProgress />
+            <RollHistory />
+            <DowntimePanel />
+            <ProductionFloorOverview />
+            <QualityControl />
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+              <TelegramNotifications />
+              <EventLog />
+            </div>
+        </section>
+        </div>
       </main>
     </div>
   );

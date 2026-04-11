@@ -4,10 +4,10 @@ services:
   app:
     build: .
     ports:
-      - "3000:3000"
+      - "5000:5000"
     env_file: .env
     environment:
-      PORT: "3000"
+      PORT: "5000"
       MQTT_BROKER: "mqtt://152.42.238.142:1883"
     networks:
       - infra-network

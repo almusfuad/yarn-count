@@ -1,22 +1,22 @@
 import { useMemo } from 'react';
 import { useStore } from '../store/useStore';
-import './KpiCards.css';
 
 const KpiCard = ({ icon, label, value, sublabel, color }) => (
-  <div className="kpi-card">
-    <div className="kpi-card-header">
-      <span className="kpi-label">{label}</span>
-      <span className="kpi-icon" style={{ color }}>
+  <div className="bg-white border border-neutral-200 rounded-xs p-4 border-t-4" style={{ borderTopColor: color }}>
+    <div className="flex justify-between items-start mb-3">
+      <span className="text-xs font-bold uppercase tracking-wide text-neutral-400">{label}</span>
+      <span className="text-lg leading-none" style={{ color }}>
         {icon}
       </span>
     </div>
-    <div className="kpi-value" style={{ color }}>
+    <div className="text-2xl font-bold mb-1.5" style={{ color }}>
       {value}
     </div>
-    <div className="kpi-sublabel">{sublabel}</div>
+    <div className="text-xs text-neutral-400">{sublabel}</div>
   </div>
 );
 
+// AlertRow component for displaying individual alerts
 const AlertRow = ({ alert, onAck }) => {
   const formatTime = (timestamp) => {
     const date = new Date(timestamp);
@@ -29,19 +29,23 @@ const AlertRow = ({ alert, onAck }) => {
   };
 
   const bgColor = alert.severity === 'critical' ? '#fee2e2' : '#fffbeb';
+  const borderColor = alert.severity === 'critical' ? '#ef4444' : '#f59e0b';
   const icon = alert.severity === 'critical' ? '🔴' : '⚠️';
 
   return (
-    <div className="alert-row" style={{ backgroundColor: bgColor }}>
-      <div className="alert-left">
-        <span className="alert-icon">{icon}</span>
-        <div className="alert-content">
-          <div className="alert-title">{alert.title || 'Alert'}</div>
-          <div className="alert-message">{alert.message || ''}</div>
-          <div className="alert-timestamp">{formatTime(alert.timestamp)}</div>
+    <div className="flex justify-between items-center p-4 rounded-xs gap-3 border-l-4" style={{ backgroundColor: bgColor, borderLeftColor: borderColor }}>
+      <div className="flex gap-2.5 flex-1">
+        <span className="text-lg shrink-0">{icon}</span>
+        <div className="flex-1">
+          <div className="text-sm font-semibold text-neutral-900 mb-1">{alert.title || 'Alert'}</div>
+          <div className="text-xs text-neutral-500 mb-1">{alert.message || ''}</div>
+          <div className="text-xs text-neutral-400">{formatTime(alert.timestamp)}</div>
         </div>
       </div>
-      <button className="alert-ack-btn" onClick={() => onAck(alert.id)}>
+      <button
+        className="bg-white text-indigo-600 border border-neutral-200 rounded-xs px-2.5 py-1.5 text-xs font-semibold cursor-pointer whitespace-nowrap shrink-0 hover:bg-indigo-600 hover:text-white transition-all"
+        onClick={() => onAck(alert.id)}
+      >
         Acknowledge
       </button>
     </div>
@@ -190,11 +194,11 @@ export default function KpiCards() {
   };
 
   return (
-    <div className="kpi-cards">
+    <div className="bg-white rounded-sm shadow-sm overflow-hidden mb-6">
       {/* Section 1: Overall Summary */}
-      <div className="kpi-section">
-        <h3 className="kpi-section-title">Overall Summary</h3>
-        <div className="kpi-cards-grid">
+      <div className="p-5 border-b border-neutral-150">
+        <h3 className="text-xs font-bold uppercase tracking-wider text-neutral-500 m-0 mb-3 md:mb-4">Overall Summary</h3>
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2 sm:gap-3 md:gap-4">
           {overallSummaryCards.map((card, idx) => (
             <KpiCard key={idx} {...card} />
           ))}
@@ -202,34 +206,39 @@ export default function KpiCards() {
       </div>
 
       {/* Section 2: Active Alerts */}
-      <div className="kpi-section alerts-section">
-        <div className="alerts-header">
-          <h3 className="alerts-title">Active Alerts</h3>
-          <span className="alerts-badge">{unackedAlerts.length} Unacknowledged</span>
+      <div className="p-3 sm:p-4 md:p-5 bg-neutral-50">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-3 sm:mb-4 gap-2 sm:gap-3">
+          <h3 className="text-xs font-bold uppercase tracking-wider text-neutral-500 m-0">Active Alerts</h3>
+          <span className="bg-pink-100 text-pink-700 px-2.5 py-1 rounded-lg text-xs font-bold whitespace-nowrap">
+            {unackedAlerts.length} Unacknowledged
+          </span>
           {unackedAlerts.length > 0 && (
-            <button className="alerts-ack-all-btn" onClick={handleAckAll}>
+            <button
+              className="bg-purple-600 text-white border-0 rounded-xs px-3 py-1.5 text-xs font-semibold cursor-pointer whitespace-nowrap hover:bg-purple-700 transition-colors"
+              onClick={handleAckAll}
+            >
               Acknowledge All
             </button>
           )}
         </div>
 
-        <div className="alerts-list">
+        <div className="flex flex-col gap-2">
           {unackedAlerts.length > 0 ? (
             unackedAlerts.map((alert) => (
               <AlertRow key={alert.id} alert={alert} onAck={ackAlert} />
             ))
           ) : (
-            <div className="alerts-empty">No unacknowledged alerts</div>
+            <div className="text-center text-neutral-400 italic p-5">No unacknowledged alerts</div>
           )}
         </div>
       </div>
 
       {/* Section 3: Machine Production */}
-      <div className="kpi-section">
-        <h3 className="kpi-section-title">
+      <div className="p-3 sm:p-4 md:p-5 border-t border-neutral-150">
+        <h3 className="text-xs font-bold uppercase tracking-wider text-neutral-500 m-0 mb-3 md:mb-4">
           Machine Production — Roll & Kg Tracking ({session.asset})
         </h3>
-        <div className="kpi-cards-grid">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-8 gap-2 sm:gap-3 md:gap-4">
           {machineProductionCards.map((card, idx) => (
             <KpiCard key={idx} {...card} />
           ))}
