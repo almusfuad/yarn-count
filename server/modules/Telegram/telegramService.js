@@ -3,7 +3,7 @@
  * Handles Telegram notifications and alerts
  */
 
-const logger = require('../../utils/logger');
+import logger from '../../utils/logger.js';
 
 class TelegramService {
   constructor() {
@@ -124,4 +124,4 @@ Active Problems: ${metrics.activeProblems}
   }
 }
 
-module.exports = new TelegramService();
+export default new TelegramService();

@@ -1,30 +1,43 @@
 // Express + WebSocket + MQTT wiring
 
-const express = require('express');
-const http = require('http');
-const { WebSocketServer } = require('ws');
-const cors = require('cors');
-const path = require('path');
-require('dotenv').config({ path: path.join(__dirname, '..', '.env') });
+import express from 'express';
+import http from 'http';
+import { WebSocketServer } from 'ws';
+import cors from 'cors';
+import path from 'path';
+import dotenv from 'dotenv';
+import { getDirname } from './utils/fileHelpers.js';
+
+// Load environment variables
+const __dirname = getDirname(import.meta.url);
+dotenv.config({ path: path.join(__dirname, '..', '.env') });
 
 // Services from modules
-const machineService = require('./modules/Machine/machineService');
-const dashboardService = require('./modules/Dashboard/dashboardService');
-const telegramService = require('./modules/Telegram/telegramService');
-const mqttService = require('./modules/MQTT/mqttService');
+import machineService from './modules/Machine/machineService.js';
+import dashboardService from './modules/Dashboard/dashboardService.js';
+import telegramService from './modules/Telegram/telegramService.js';
+import mqttService from './modules/MQTT/mqttService.js';
 
 // Infrastructure
-const { init: initBroadcast, sendToClient, broadcast } = require('./broadcast');
-const { startMqtt } = require('./mqtt');
-const telegram = require('./telegram');
-const { connectToMongoDB, disconnectFromMongoDB } = require('./db/mongodb');
-const { initializeIndexes } = require('./db/schemas');
-const { startSnapshotGenerator, stopSnapshotGenerator } = require('./jobs/snapshotGenerator');
-const { startDataExporter, stopDataExporter } = require('./jobs/dataExporter');
-const logger = require('./utils/logger');
+import { init as initBroadcast, sendToClient, broadcast } from './broadcast.js';
+import { startMqtt } from './mqtt.js';
+import * as telegram from './telegram.js';
+import { connectToMongoDB, disconnectFromMongoDB } from './db/mongodb.js';
+import { initializeIndexes } from './db/schemas.js';
+import { startSnapshotGenerator, stopSnapshotGenerator } from './jobs/snapshotGenerator.js';
+import { startDataExporter, stopDataExporter } from './jobs/dataExporter.js';
+import logger from './utils/logger.js';
 
 // Middleware
-const { errorHandler, notFoundHandler } = require('./modules/Shared/middleware/errorHandler');
+import { errorHandler, notFoundHandler } from './modules/Shared/middleware/errorHandler.js';
+
+// Routes from modules
+import machineRoutes from './modules/Machine/machine.routes.js';
+import dashboardRoutes from './modules/Dashboard/dashboard.routes.js';
+import logsRoutes from './modules/Logs/logs.routes.js';
+import eventRoutes from './modules/Event/event.routes.js';
+import exportsRoutes from './modules/Export/exports.routes.js';
+import healthRoutes from './modules/Health/health.routes.js';
 
 const app = express();
 const server = http.createServer(app);
@@ -43,20 +56,20 @@ machineService.setBroadcast(broadcast);
 telegramService.setTelegramClient(telegram.client);
 
 // Attach services to global context for jobs and other modules (optional)
-global.services = {
+globalThis.services = {
   machineService,
   dashboardService,
   telegramService,
   mqttService
 };
 
-// Routes from modules
-app.use('/api/machines', require('./modules/Machine/machine.routes'));
-app.use('/api/dashboard', require('./modules/Dashboard/dashboard.routes'));
-app.use('/api', require('./modules/Logs/logs.routes'));
-app.use('/api/history', require('./modules/Event/event.routes'));
-app.use('/api/exports', require('./modules/Export/exports.routes'));
-app.use('/api/health', require('./modules/Health/health.routes'));
+// Mount routes
+app.use('/api/machines', machineRoutes);
+app.use('/api/dashboard', dashboardRoutes);
+app.use('/api', logsRoutes);
+app.use('/api/history', eventRoutes);
+app.use('/api/exports', exportsRoutes);
+app.use('/api/health', healthRoutes);
 
 // Telegram notification routes
 app.get('/api/telegram/status', (req, res) => {
@@ -71,14 +84,15 @@ app.post('/api/telegram/config', (req, res) => {
 // Health check route (legacy support)
 app.get('/health', async (req, res) => {
   try {
-    const mongoose = require('mongoose');
-    const state = mongoose.connection.readyState;
-    res.json({
-      status: 'ok',
-      mongodb: {
-        connected: state === 1,
-        state: state === 1 ? 'connected' : 'disconnected'
-      }
+    import('mongoose').then(({ default: mongoose }) => {
+      const state = mongoose.connection.readyState;
+      res.json({
+        status: 'ok',
+        mongodb: {
+          connected: state === 1,
+          state: state === 1 ? 'connected' : 'disconnected'
+        }
+      });
     });
   } catch (error) {
     res.status(503).json({ status: 'error', message: error.message });

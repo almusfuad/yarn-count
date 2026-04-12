@@ -1,31 +1,27 @@
 // WebSocket broadcast utilities
 
-const WebSocket = require('ws');
+import WebSocket from 'ws';
+
+const OPEN = WebSocket.OPEN;
 
 let wss = null;
 
-function init(wssInstance) {
+export function init(wssInstance) {
   wss = wssInstance;
 }
 
-function broadcast(type, payload) {
+export function broadcast(type, payload) {
   if (!wss) return;
   
   wss.clients.forEach(client => {
-    if (client.readyState === WebSocket.OPEN) {
+    if (client.readyState === OPEN) {
       client.send(JSON.stringify({ type, payload }));
     }
   });
 }
 
-function sendToClient(ws, type, payload) {
-  if (ws.readyState === WebSocket.OPEN) {
+export function sendToClient(ws, type, payload) {
+  if (ws.readyState === OPEN) {
     ws.send(JSON.stringify({ type, payload }));
   }
 }
-
-module.exports = {
-  init,
-  broadcast,
-  sendToClient
-};

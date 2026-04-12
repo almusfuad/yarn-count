@@ -3,13 +3,13 @@
  * Centralized error handling and response formatting
  */
 
-const logger = require('../../../utils/logger');
+import logger from '../../../utils/logger.js';
 
 /**
  * Global error handler middleware
  * Should be registered last in middleware stack
  */
-const errorHandler = (err, req, res, next) => {
+export const errorHandler = (err, req, res, next) => {
   // Log error
   logger.error(`❌ Error: ${err.message}`);
   if (err.stack) {
@@ -42,7 +42,7 @@ const errorHandler = (err, req, res, next) => {
 /**
  * Wrapper to catch async errors in route handlers
  */
-const asyncHandler = (fn) => {
+export const asyncHandler = (fn) => {
   return (req, res, next) => {
     Promise.resolve(fn(req, res, next)).catch(next);
   };
@@ -51,17 +51,11 @@ const asyncHandler = (fn) => {
 /**
  * Handle 404 errors
  */
-const notFoundHandler = (req, res) => {
+export const notFoundHandler = (req, res) => {
   res.status(404).json({
     error: 'Not Found',
     message: `Route ${req.method} ${req.originalUrl} not found`,
     statusCode: 404,
     timestamp: new Date().toISOString()
   });
-};
-
-module.exports = {
-  errorHandler,
-  asyncHandler,
-  notFoundHandler
 };

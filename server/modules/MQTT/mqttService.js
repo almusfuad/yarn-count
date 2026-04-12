@@ -3,9 +3,9 @@
  * Orchestrates routing of MQTT messages to appropriate handlers
  */
 
-const machineService = require('../Machine/machineService');
-const telegramService = require('../Telegram/telegramService');
-const logger = require('../../utils/logger');
+import machineService from '../Machine/machineService.js';
+import telegramService from '../Telegram/telegramService.js';
+import logger from '../../utils/logger.js';
 
 class MQTTService {
   /**
@@ -106,4 +106,4 @@ class MQTTService {
   }
 }
 
-module.exports = new MQTTService();
+export default new MQTTService();

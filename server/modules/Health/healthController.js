@@ -3,15 +3,15 @@
  * Handles HTTP requests for health checks
  */
 
-const mongoose = require('mongoose');
-const exportService = require('../Export/exportService');
-const logger = require('../../utils/logger');
+import mongoose from 'mongoose';
+import exportService from '../Export/exportService.js';
+import logger from '../../utils/logger.js';
 
 /**
  * GET /api/health/db
  * Check database connectivity and health
  */
-exports.checkDatabaseHealth = (req, res) => {
+export const checkDatabaseHealth = (req, res) => {
   try {
     const state = mongoose.connection.readyState;
     const stateNames = {
@@ -45,7 +45,7 @@ exports.checkDatabaseHealth = (req, res) => {
  * GET /api/health/exports
  * Check export system health
  */
-exports.checkExportHealth = async (req, res) => {
+export const checkExportHealth = async (req, res) => {
   try {
     const status = await exportService.getExportStatus();
 
@@ -70,7 +70,7 @@ exports.checkExportHealth = async (req, res) => {
  * GET /api/health
  * Overall system health check
  */
-exports.getOverallHealth = async (req, res) => {
+export const getOverallHealth = async (req, res) => {
   try {
     const dbState = mongoose.connection.readyState;
     const dbHealthy = dbState === 1;
@@ -106,5 +106,3 @@ exports.getOverallHealth = async (req, res) => {
     });
   }
 };
-
-module.exports = exports;

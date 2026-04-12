@@ -3,9 +3,10 @@
  * Mounts health controller methods for system health checks
  */
 
-const express = require('express');
+import express from 'express';
+import * as healthController from './healthController.js';
+
 const router = express.Router();
-const healthController = require('./healthController');
 
 // GET /api/health/db - check database health
 router.get('/db', healthController.checkDatabaseHealth);
@@ -16,4 +17,4 @@ router.get('/exports', healthController.checkExportHealth);
 // GET /api/health - overall system health
 router.get('/', healthController.getOverallHealth);
 
-module.exports = router;
+export default router;

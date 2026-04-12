@@ -3,14 +3,14 @@
  * Handles HTTP requests for downtime and quality logging
  */
 
-const machineService = require('../Machine/machineService');
-const logger = require('../../utils/logger');
+import machineService from '../Machine/machineService.js';
+import logger from '../../utils/logger.js';
 
 /**
  * POST /api/downtime
  * Log downtime event
  */
-exports.logDowntime = (req, res) => {
+export const logDowntime = (req, res) => {
   try {
     const { machineId, reason, remarks } = req.body;
 
@@ -38,7 +38,7 @@ exports.logDowntime = (req, res) => {
  * POST /api/quality
  * Log quality/fault event
  */
-exports.logQuality = (req, res) => {
+export const logQuality = (req, res) => {
   try {
     const { machineId, faultType, severity, description } = req.body;
 
@@ -70,7 +70,7 @@ exports.logQuality = (req, res) => {
  * POST /api/rollweight
  * Log roll weight measurement
  */
-exports.logRollWeight = (req, res) => {
+export const logRollWeight = (req, res) => {
   try {
     const { machineId, weight } = req.body;
 
@@ -98,7 +98,7 @@ exports.logRollWeight = (req, res) => {
  * POST /api/alerts/:alertId/acknowledge
  * Acknowledge an alert
  */
-exports.acknowledgeAlert = (req, res) => {
+export const acknowledgeAlert = (req, res) => {
   try {
     const { alertId } = req.params;
     const { machineId } = req.body;
@@ -123,5 +123,3 @@ exports.acknowledgeAlert = (req, res) => {
     res.status(500).json({ error: 'Failed to acknowledge alert' });
   }
 };
-
-module.exports = exports;

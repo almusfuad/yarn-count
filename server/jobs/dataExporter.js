@@ -1,8 +1,8 @@
-const schedule = require('node-schedule');
-const eventRepository = require('../modules/Event/eventRepository');
-const exportRepository = require('../modules/Export/exportRepository');
-const exportService = require('../modules/Export/exportService');
-const logger = require('../utils/logger');
+import schedule from 'node-schedule';
+import eventRepository from '../modules/Event/eventRepository.js';
+import exportRepository from '../modules/Export/exportRepository.js';
+import exportService from '../modules/Export/exportService.js';
+import logger from '../utils/logger.js';
 
 let weeklyJob = null;
 
@@ -10,7 +10,7 @@ let weeklyJob = null;
  * Export data older than 13.5 months to prevent loss due to TTL deletion
  * Runs weekly on Monday at 22:00 UTC
  */
-async function exportOldData() {
+export async function exportOldData() {
   try {
     logger.info('📦 Starting weekly data export...');
 
@@ -73,7 +73,7 @@ async function exportOldData() {
  * Start the data exporter job
  * Runs weekly on Monday at 22:00 UTC
  */
-function startDataExporter() {
+export function startDataExporter() {
   try {
     // Weekly job: 22:00 UTC every Monday
     const weeklyCron = process.env.EXPORT_WEEKLY_CRON || '0 22 * * 1';
@@ -87,16 +87,11 @@ function startDataExporter() {
 
 /**
  * Stop the data exporter job
+ * Called on server shutdown
  */
-function stopDataExporter() {
+export function stopDataExporter() {
   if (weeklyJob) {
     weeklyJob.cancel();
     logger.info('✅ Weekly export job cancelled');
   }
 }
-
-module.exports = {
-  exportOldData,
-  startDataExporter,
-  stopDataExporter,
-};

@@ -3,14 +3,14 @@
  * Handles HTTP requests related to machines
  */
 
-const machineService = require('./machineService');
-const logger = require('../../utils/logger');
+import machineService from './machineService.js';
+import logger from '../../utils/logger.js';
 
 /**
  * GET /api/machines
  * Get all machines with their current status
  */
-exports.getAllMachines = (req, res) => {
+export const getAllMachines = (req, res) => {
   try {
     const machines = machineService.getAllMachineSummaries();
     res.json(machines);
@@ -24,7 +24,7 @@ exports.getAllMachines = (req, res) => {
  * GET /api/machines/:id
  * Get specific machine details
  */
-exports.getMachineDetail = (req, res) => {
+export const getMachineDetail = (req, res) => {
   try {
     const { id } = req.params;
 
@@ -49,7 +49,7 @@ exports.getMachineDetail = (req, res) => {
  * GET /api/machines/:id/details
  * Get full machine state (more detailed than summary)
  */
-exports.getMachineState = (req, res) => {
+export const getMachineState = (req, res) => {
   try {
     const { id } = req.params;
 
@@ -69,5 +69,3 @@ exports.getMachineState = (req, res) => {
     res.status(500).json({ error: 'Failed to retrieve machine state' });
   }
 };
-
-module.exports = exports;

@@ -3,14 +3,14 @@
  * Handles HTTP requests for data exports
  */
 
-const exportService = require('./exportService');
-const logger = require('../../utils/logger');
+import exportService from './exportService.js';
+import logger from '../../utils/logger.js';
 
 /**
  * POST /api/exports/trigger
  * Trigger a manual data export
  */
-exports.triggerExport = async (req, res) => {
+export const triggerExport = async (req, res) => {
   try {
     const { machineId, startDate, endDate } = req.body;
 
@@ -35,7 +35,7 @@ exports.triggerExport = async (req, res) => {
  * GET /api/exports/history
  * Get export history with pagination
  */
-exports.getExportHistory = async (req, res) => {
+export const getExportHistory = async (req, res) => {
   try {
     const { machineId, limit = 10, offset = 0 } = req.query;
 
@@ -59,7 +59,7 @@ exports.getExportHistory = async (req, res) => {
  * GET /api/exports/:id
  * Get specific export details
  */
-exports.getExportById = async (req, res) => {
+export const getExportById = async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -84,7 +84,7 @@ exports.getExportById = async (req, res) => {
  * GET /api/exports/status
  * Get export system status
  */
-exports.getExportStatus = async (req, res) => {
+export const getExportStatus = async (req, res) => {
   try {
     const status = await exportService.getExportStatus();
     res.json(status);
@@ -98,7 +98,7 @@ exports.getExportStatus = async (req, res) => {
  * GET /api/exports/recent
  * Get recent exports
  */
-exports.getRecentExports = async (req, res) => {
+export const getRecentExports = async (req, res) => {
   try {
     const { limit = 10 } = req.query;
     const limitNum = Math.min(parseInt(limit, 10) || 10, 100);
@@ -115,7 +115,7 @@ exports.getRecentExports = async (req, res) => {
  * GET /api/exports/:id/verify
  * Verify export data integrity
  */
-exports.verifyExport = async (req, res) => {
+export const verifyExport = async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -130,5 +130,3 @@ exports.verifyExport = async (req, res) => {
     res.status(500).json({ error: 'Failed to verify export' });
   }
 };
-
-module.exports = exports;

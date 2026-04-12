@@ -3,8 +3,8 @@
  * Business logic for event management and logging
  */
 
-const eventRepository = require('./eventRepository');
-const logger = require('../../utils/logger');
+import eventRepository from './eventRepository.js';
+import logger from '../../utils/logger.js';
 
 class EventService {
   /**
@@ -104,4 +104,4 @@ class EventService {
   }
 }
 
-module.exports = new EventService();
+export default new EventService();

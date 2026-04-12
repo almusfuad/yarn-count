@@ -3,7 +3,7 @@
  * Represents the state and structure of a machine
  */
 
-class Machine {
+export class Machine {
   constructor(machineId) {
     this.machineId = machineId;
     this.status = 'OFF'; // OFF, ON, STOPPED
@@ -89,5 +89,3 @@ class Machine {
     return machine;
   }
 }
-
-module.exports = Machine;

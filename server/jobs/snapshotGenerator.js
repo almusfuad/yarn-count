@@ -1,8 +1,8 @@
-const schedule = require('node-schedule');
-const eventRepository = require('../modules/Event/eventRepository');
-const kpiRepository = require('../modules/Event/kpiRepository');
-const { calculateKPIMetrics } = require('../utils/snapshotCalculator');
-const logger = require('../utils/logger');
+import schedule from 'node-schedule';
+import eventRepository from '../modules/Event/eventRepository.js';
+import kpiRepository from '../modules/Event/kpiRepository.js';
+import { calculateKPIMetrics } from '../utils/snapshotCalculator.js';
+import logger from '../utils/logger.js';
 
 let dailyJob = null;
 let weeklyJob = null;
@@ -11,7 +11,7 @@ let weeklyJob = null;
  * Generate daily KPI snapshots at 00:05 UTC
  * Aggregates all events from the previous day for each machine
  */
-async function generateDailySnapshots() {
+export async function generateDailySnapshots() {
   try {
     logger.info('📊 Starting daily snapshot generation...');
 
@@ -73,7 +73,7 @@ async function generateDailySnapshots() {
  * Generate weekly KPI snapshots at 00:10 UTC on Sundays
  * Aggregates all events from the previous week (Mon-Sun) for each machine
  */
-async function generateWeeklySnapshots() {
+export async function generateWeeklySnapshots() {
   try {
     logger.info('📊 Starting weekly snapshot generation...');
 
@@ -139,7 +139,7 @@ async function generateWeeklySnapshots() {
  * Start the snapshot generator jobs
  * Called on server startup
  */
-function startSnapshotGenerator() {
+export function startSnapshotGenerator() {
   try {
     // Daily job: 00:05 UTC every day
     const dailyCron = process.env.SNAPSHOT_DAILY_CRON || '0 5 * * *';
@@ -164,7 +164,7 @@ function startSnapshotGenerator() {
  * Stop the snapshot generator jobs
  * Called on server shutdown
  */
-function stopSnapshotGenerator() {
+export function stopSnapshotGenerator() {
   if (dailyJob) {
     dailyJob.cancel();
     logger.info('✅ Daily snapshot job cancelled');
@@ -174,57 +174,3 @@ function stopSnapshotGenerator() {
     logger.info('✅ Weekly snapshot job cancelled');
   }
 }
-
-module.exports = {
-  generateDailySnapshots,
-  generateWeeklySnapshots,
-  startSnapshotGenerator,
-  stopSnapshotGenerator,
-};
-
-/**
- * Start the snapshot generator jobs
- * Called on server startup
- */
-function startSnapshotGenerator() {
-  try {
-    // Daily job: 00:05 UTC every day
-    const dailyCron = process.env.SNAPSHOT_DAILY_CRON || '0 5 * * *';
-    dailyJob = schedule.scheduleJob(dailyCron, generateDailySnapshots);
-    logger.info(`✅ Daily snapshot job scheduled: ${dailyCron}`);
-
-    // Weekly job: 00:10 UTC every Sunday
-    const weeklyCron = process.env.SNAPSHOT_WEEKLY_CRON || '0 10 * * 0';
-    weeklyJob = schedule.scheduleJob(weeklyCron, generateWeeklySnapshots);
-    logger.info(`✅ Weekly snapshot job scheduled: ${weeklyCron}`);
-
-    // Optionally run on startup (commented out for now)
-    // generateDailySnapshots();
-    // generateWeeklySnapshots();
-  } catch (error) {
-    logger.error(`❌ Error starting snapshot generator: ${error.message}`);
-    throw error;
-  }
-}
-
-/**
- * Stop the snapshot generator jobs
- * Called on server shutdown
- */
-function stopSnapshotGenerator() {
-  if (dailyJob) {
-    dailyJob.cancel();
-    logger.info('✅ Daily snapshot job cancelled');
-  }
-  if (weeklyJob) {
-    weeklyJob.cancel();
-    logger.info('✅ Weekly snapshot job cancelled');
-  }
-}
-
-module.exports = {
-  generateDailySnapshots,
-  generateWeeklySnapshots,
-  startSnapshotGenerator,
-  stopSnapshotGenerator,
-};

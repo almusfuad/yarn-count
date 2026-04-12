@@ -3,8 +3,8 @@
  * Aggregates KPI metrics across all machines
  */
 
-const machineService = require('../Machine/machineService');
-const logger = require('../../utils/logger');
+import machineService from '../Machine/machineService.js';
+import logger from '../../utils/logger.js';
 
 class DashboardService {
   /**
@@ -166,4 +166,4 @@ class DashboardService {
   }
 }
 
-module.exports = new DashboardService();
+export default new DashboardService();

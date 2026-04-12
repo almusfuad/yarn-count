@@ -1,5 +1,5 @@
-const { Event } = require('./schemas');
-const logger = require('../utils/logger');
+import { Event } from './schemas.js';
+import logger from '../utils/logger.js';
 
 /**
  * Log an event to MongoDB asynchronously without blocking
@@ -14,7 +14,7 @@ const logger = require('../utils/logger');
  * logEvent('status_change', 'M1', { newStatus: 'ON', oldStatus: 'OFF' })
  * logEvent('roll_weight', 'M1', { weight: 2.5, rollNumber: 42 })
  */
-async function logEvent(type, machineId, data) {
+export async function logEvent(type, machineId, data) {
   try {
     // Fire and forget: don't wait for write to complete
     // This ensures broadcast is not blocked by MongoDB writes
@@ -57,7 +57,7 @@ async function logEvent(type, machineId, data) {
  * Batch log multiple events (useful for bulk operations)
  * Still non-blocking - events are queued for background writes
  */
-async function logEventBatch(events) {
+export async function logEventBatch(events) {
   try {
     Promise.resolve().then(async () => {
       try {
@@ -90,7 +90,7 @@ async function logEventBatch(events) {
  * Get event count for a machine within date range
  * Used for health checks and debugging
  */
-async function getEventCount(machineId, startDate, endDate) {
+export async function getEventCount(machineId, startDate, endDate) {
   try {
     const count = await Event.countDocuments({
       machineId,
@@ -109,7 +109,7 @@ async function getEventCount(machineId, startDate, endDate) {
 /**
  * Query events with filters (used by history endpoints)
  */
-async function queryEvents(machineId, startDate, endDate, type = null) {
+export async function queryEvents(machineId, startDate, endDate, type = null) {
   try {
     const query = {
       machineId,
@@ -133,10 +133,3 @@ async function queryEvents(machineId, startDate, endDate, type = null) {
     return [];
   }
 }
-
-module.exports = {
-  logEvent,
-  logEventBatch,
-  getEventCount,
-  queryEvents,
-};

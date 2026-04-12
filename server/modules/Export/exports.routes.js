@@ -3,9 +3,10 @@
  * Mounts exports controller methods for data export management
  */
 
-const express = require('express');
+import express from 'express';
+import * as exportsController from './exportsController.js';
+
 const router = express.Router();
-const exportsController = require('./exportsController');
 
 // POST /api/exports/trigger - trigger manual export
 router.post('/trigger', exportsController.triggerExport);
@@ -25,4 +26,4 @@ router.get('/recent', exportsController.getRecentExports);
 // GET /api/exports/:id/verify - verify export integrity
 router.get('/:id/verify', exportsController.verifyExport);
 
-module.exports = router;
+export default router;

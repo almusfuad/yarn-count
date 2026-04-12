@@ -3,7 +3,7 @@
  * Represents a data export transaction
  */
 
-class Export {
+export class Export {
   constructor(data = {}) {
     this.machineId = data.machineId || null;
     this.exportType = data.exportType || 'manual'; // daily, weekly, manual
@@ -57,5 +57,3 @@ class Export {
     };
   }
 }
-
-module.exports = Export;

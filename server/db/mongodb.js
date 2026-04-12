@@ -1,5 +1,5 @@
-const mongoose = require('mongoose');
-const logger = require('../utils/logger');
+import mongoose from 'mongoose';
+import logger from '../utils/logger.js';
 
 let isConnected = false;
 
@@ -7,7 +7,7 @@ let isConnected = false;
  * Connect to MongoDB Atlas with connection pooling and error handling
  * Uses exponential backoff for retries
  */
-async function connectToMongoDB() {
+export async function connectToMongoDB() {
   if (isConnected) {
     console.log('MongoDB already connected');
     return mongoose.connection;
@@ -60,14 +60,14 @@ async function connectToMongoDB() {
 /**
  * Check if MongoDB is connected
  */
-function isMongoDBConnected() {
+export function isMongoDBConnected() {
   return isConnected && mongoose.connection.readyState === 1;
 }
 
 /**
  * Disconnect from MongoDB
  */
-async function disconnectFromMongoDB() {
+export async function disconnectFromMongoDB() {
   if (isConnected) {
     await mongoose.disconnect();
     isConnected = false;
@@ -78,7 +78,7 @@ async function disconnectFromMongoDB() {
 /**
  * Get connection status for health checks
  */
-function getConnectionStatus() {
+export function getConnectionStatus() {
   return {
     isConnected: isMongoDBConnected(),
     readyState: mongoose.connection.readyState,
@@ -88,10 +88,4 @@ function getConnectionStatus() {
   };
 }
 
-module.exports = {
-  connectToMongoDB,
-  isMongoDBConnected,
-  disconnectFromMongoDB,
-  getConnectionStatus,
-  mongoose,
-};
+export { mongoose };

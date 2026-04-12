@@ -3,9 +3,10 @@
  * Mounts history controller methods for querying historical data
  */
 
-const express = require('express');
+import express from 'express';
+import * as historyController from './historyController.js';
+
 const router = express.Router();
-const historyController = require('./historyController');
 
 // GET /api/history/events - query events for a machine
 router.get('/events', historyController.getEvents);
@@ -22,4 +23,4 @@ router.get('/kpi-snapshots', historyController.getKPISnapshots);
 // GET /api/history/machine/:id/stats - get event statistics
 router.get('/machine/:id/stats', historyController.getMachineEventStats);
 
-module.exports = router;
+export default router;

@@ -3,15 +3,15 @@
  * Handles HTTP requests for historical data queries
  */
 
-const eventService = require('./eventService');
-const kpiRepository = require('./kpiRepository');
-const logger = require('../../utils/logger');
+import eventService from './eventService.js';
+import kpiRepository from './kpiRepository.js';
+import logger from '../../utils/logger.js';
 
 /**
  * GET /api/history/events
  * Query events for a machine within date range
  */
-exports.getEvents = async (req, res) => {
+export const getEvents = async (req, res) => {
   try {
     const { machineId, startDate, endDate, type } = req.query;
 
@@ -54,7 +54,7 @@ exports.getEvents = async (req, res) => {
  * GET /api/history/events/count
  * Get event count for a machine within date range
  */
-exports.getEventCount = async (req, res) => {
+export const getEventCount = async (req, res) => {
   try {
     const { machineId, startDate, endDate } = req.query;
 
@@ -88,7 +88,7 @@ exports.getEventCount = async (req, res) => {
  * GET /api/history/kpi-snapshot
  * Get KPI snapshot for a machine on a specific date
  */
-exports.getKPISnapshot = async (req, res) => {
+export const getKPISnapshot = async (req, res) => {
   try {
     const { machineId, snapshotDate, period } = req.query;
 
@@ -121,7 +121,7 @@ exports.getKPISnapshot = async (req, res) => {
  * GET /api/history/kpi-snapshots
  * Get KPI snapshots for a machine within date range
  */
-exports.getKPISnapshots = async (req, res) => {
+export const getKPISnapshots = async (req, res) => {
   try {
     const { machineId, startDate, endDate, period } = req.query;
 
@@ -157,7 +157,7 @@ exports.getKPISnapshots = async (req, res) => {
  * GET /api/history/machine/:id/stats
  * Get event statistics for a machine
  */
-exports.getMachineEventStats = async (req, res) => {
+export const getMachineEventStats = async (req, res) => {
   try {
     const { id } = req.params;
     const { startDate, endDate } = req.query;
@@ -181,5 +181,3 @@ exports.getMachineEventStats = async (req, res) => {
     res.status(500).json({ error: 'Failed to retrieve machine event stats' });
   }
 };
-
-module.exports = exports;

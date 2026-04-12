@@ -3,7 +3,7 @@
  * Represents an event in the system
  */
 
-class Event {
+export class Event {
   constructor(type, machineId, data, timestamp = null) {
     this.type = type; // pulse, status_change, problem, roll_weight, downtime, quality
     this.machineId = machineId;
@@ -85,5 +85,3 @@ class Event {
     };
   }
 }
-
-module.exports = Event;

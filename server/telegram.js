@@ -1,6 +1,6 @@
-const https = require('https');
+import https from 'https';
 
-let config = {
+export const config = {
   botToken: process.env.TELEGRAM_BOT_TOKEN || '',
   chatId: process.env.TELEGRAM_CHAT_ID || '',
   channelName: process.env.TELEGRAM_CHANNEL_NAME || 'Amantex Factory Alerts',
@@ -13,9 +13,9 @@ let config = {
   }
 };
 
-const recentMessages = [];
+export const recentMessages = [];
 
-function sendMessage(text) {
+export function sendMessage(text) {
   if (!config.botToken || !config.chatId) return;
 
   const url = `https://api.telegram.org/bot${config.botToken}/sendMessage`;
@@ -58,13 +58,13 @@ function notifyMachineStop(machineId) {
   sendMessage(`⚠ WARNING: ${machineId} stopped — no pulse`);
 }
 
-function notifyQualityFault(machineId, faultType, severity) {
+export function notifyQualityFault(machineId, faultType, severity) {
   if (!config.notifyOn.qualityFault) return;
   const emoji = severity === 'critical' ? '🔴 CRITICAL' : '⚠ WARNING';
   sendMessage(`${emoji}: Quality fault on ${machineId} — ${faultType}`);
 }
 
-function getStatus() {
+export function getStatus() {
   return {
     botName: config.botName,
     channelName: config.channelName,
@@ -74,13 +74,13 @@ function getStatus() {
   };
 }
 
-function updateConfig(newConfig) {
+export function updateConfig(newConfig) {
   if (newConfig.notifyOn) {
     config.notifyOn = { ...config.notifyOn, ...newConfig.notifyOn };
   }
 }
 
-module.exports = {
+export const client = {
   sendMessage,
   notifyMachineStop,
   notifyQualityFault,

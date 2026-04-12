@@ -3,14 +3,14 @@
  * Handles HTTP requests for dashboard KPIs
  */
 
-const dashboardService = require('./dashboardService');
-const logger = require('../../utils/logger');
+import dashboardService from './dashboardService.js';
+import logger from '../../utils/logger.js';
 
 /**
  * GET /api/dashboard
  * Get comprehensive dashboard KPIs
  */
-exports.getDashboard = (req, res) => {
+export const getDashboard = (req, res) => {
   try {
     const metrics = dashboardService.calculateDashboardMetrics();
     res.json(metrics);
@@ -27,7 +27,7 @@ exports.getDashboard = (req, res) => {
  * GET /api/dashboard/machine-kpis
  * Get per-machine KPI summaries
  */
-exports.getMachineKPIs = (req, res) => {
+export const getMachineKPIs = (req, res) => {
   try {
     const kpis = dashboardService.getMachineKPIs();
     res.json(kpis);
@@ -41,7 +41,7 @@ exports.getMachineKPIs = (req, res) => {
  * GET /api/dashboard/machine/:id/kpi
  * Get KPI trend for a specific machine
  */
-exports.getMachineKPITrend = (req, res) => {
+export const getMachineKPITrend = (req, res) => {
   try {
     const { id } = req.params;
 
@@ -61,5 +61,3 @@ exports.getMachineKPITrend = (req, res) => {
     res.status(500).json({ error: 'Failed to retrieve machine KPI trend' });
   }
 };
-
-module.exports = exports;

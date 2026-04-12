@@ -3,12 +3,14 @@
  * Handles data export orchestration, file generation, and metadata management
  */
 
-const fs = require('fs').promises;
-const path = require('path');
-const crypto = require('crypto');
-const eventRepository = require('../Event/eventRepository');
-const exportRepository = require('./exportRepository');
-const logger = require('../../utils/logger');
+import fs from 'fs';
+import path from 'path';
+import crypto from 'crypto';
+import eventRepository from '../Event/eventRepository.js';
+import exportRepository from './exportRepository.js';
+import logger from '../../utils/logger.js';
+
+const __fs_promises = fs.promises;
 
 const EXPORT_PATH = process.env.EXPORT_PATH || './exports';
 
@@ -22,7 +24,7 @@ class ExportService {
    */
   async ensureExportDir() {
     try {
-      await fs.mkdir(EXPORT_PATH, { recursive: true });
+      await __fs_promises.mkdir(EXPORT_PATH, { recursive: true });
     } catch (error) {
       logger.error('❌ Error ensuring export directory:', error.message);
     }
@@ -217,4 +219,4 @@ class ExportService {
   }
 }
 
-module.exports = new ExportService();
+export default new ExportService();

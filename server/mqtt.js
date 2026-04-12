@@ -3,15 +3,15 @@
  * Delegates message handling to via mqttService
  */
 
-const mqtt = require('mqtt');
-const mqttService = require('./modules/MQTT/mqttService');
-const logger = require('./utils/logger');
+import mqtt from 'mqtt';
+import mqttService from './modules/MQTT/mqttService.js';
+import logger from './utils/logger.js';
 
 const MQTT_BROKER = process.env.MQTT_BROKER || 'mqtt://localhost:1883';
 
 let client = null;
 
-function startMqtt() {
+export function startMqtt() {
   logger.info(`🔗 Connecting to MQTT broker: ${MQTT_BROKER}`);
 
   client = mqtt.connect(MQTT_BROKER);
@@ -79,8 +79,4 @@ function stopMqtt() {
   }
 }
 
-module.exports = {
-  startMqtt,
-  stopMqtt,
-  client // Export for testing/debugging
-};
+export { stopMqtt, client };

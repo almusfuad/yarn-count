@@ -3,9 +3,10 @@
  * Mounts machine controller methods
  */
 
-const express = require('express');
+import express from 'express';
+import * as machineController from './machineController.js';
+
 const router = express.Router();
-const machineController = require('./machineController');
 
 // GET /api/machines - all machine summaries
 router.get('/', machineController.getAllMachines);
@@ -16,4 +17,4 @@ router.get('/:id', machineController.getMachineDetail);
 // GET /api/machines/:id/details - full machine state
 router.get('/:id/details', machineController.getMachineState);
 
-module.exports = router;
+export default router;

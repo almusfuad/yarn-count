@@ -3,9 +3,10 @@
  * Mounts logs controller methods for downtime and quality logging
  */
 
-const express = require('express');
+import express from 'express';
+import * as logsController from './logsController.js';
+
 const router = express.Router();
-const logsController = require('./logsController');
 
 // POST /api/downtime - log downtime event
 router.post('/downtime', logsController.logDowntime);
@@ -19,4 +20,4 @@ router.post('/rollweight', logsController.logRollWeight);
 // POST /api/alerts/:alertId/acknowledge - acknowledge alert
 router.post('/alerts/:alertId/acknowledge', logsController.acknowledgeAlert);
 
-module.exports = router;
+export default router;

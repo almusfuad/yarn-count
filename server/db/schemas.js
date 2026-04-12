@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
 
 const { Schema } = mongoose;
 
@@ -159,7 +159,7 @@ exportSchema.index({ status: 1, exportedAt: -1 });
 /**
  * Initialize indexes when models are created
  */
-async function initializeIndexes() {
+export async function initializeIndexes() {
   try {
     const Event = mongoose.model('Event', eventSchema);
     const KPISnapshot = mongoose.model('KPISnapshot', kpiSnapshotSchema);
@@ -177,9 +177,6 @@ async function initializeIndexes() {
   }
 }
 
-module.exports = {
-  Event: mongoose.model('Event', eventSchema),
-  KPISnapshot: mongoose.model('KPISnapshot', kpiSnapshotSchema),
-  Export: mongoose.model('Export', exportSchema),
-  initializeIndexes,
-};
+export const Event = mongoose.model('Event', eventSchema);
+export const KPISnapshot = mongoose.model('KPISnapshot', kpiSnapshotSchema);
+export const Export = mongoose.model('Export', exportSchema);

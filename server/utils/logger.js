@@ -1,5 +1,8 @@
-const fs = require('fs');
-const path = require('path');
+import fs from 'fs';
+import path from 'path';
+import { getDirname } from './fileHelpers.js';
+
+const __dirname = getDirname(import.meta.url);
 
 // Create logs directory if it doesn't exist
 const logsDir = path.join(__dirname, '../../logs');
@@ -44,4 +47,4 @@ const logger = {
   },
 };
 
-module.exports = logger;
+export default logger;

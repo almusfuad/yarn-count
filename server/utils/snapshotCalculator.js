@@ -1,10 +1,10 @@
-const { Event } = require('../db/schemas');
+import { Event } from '../db/schemas.js';
 
 /**
  * Calculate KPI metrics from raw events for a date range
  * Used by snapshot generator to create pre-computed aggregates
  */
-async function calculateKPIMetrics(machineId, startDate, endDate) {
+export async function calculateKPIMetrics(machineId, startDate, endDate) {
   try {
     // Query all events for the machine in the date range
     const events = await Event.find({
@@ -99,7 +99,3 @@ async function calculateKPIMetrics(machineId, startDate, endDate) {
     throw error;
   }
 }
-
-module.exports = {
-  calculateKPIMetrics,
-};

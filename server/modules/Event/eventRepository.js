@@ -3,8 +3,8 @@
  * Data access layer for Event collection in MongoDB
  */
 
-const { Event: EventModel } = require('../../db/schemas');
-const logger = require('../../utils/logger');
+import { Event as EventModel } from '../../db/schemas.js';
+import logger from '../../utils/logger.js';
 
 class EventRepository {
   /**
@@ -170,4 +170,4 @@ class EventRepository {
   }
 }
 
-module.exports = new EventRepository();
+export default new EventRepository();

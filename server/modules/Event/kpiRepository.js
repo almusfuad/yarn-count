@@ -3,8 +3,8 @@
  * Data access layer for KPI Snapshots collection in MongoDB
  */
 
-const { KPISnapshot } = require('../../db/schemas');
-const logger = require('../../utils/logger');
+import { KPISnapshot } from '../../db/schemas.js';
+import logger from '../../utils/logger.js';
 
 class KPIRepository {
   /**
@@ -185,4 +185,4 @@ class KPIRepository {
   }
 }
 
-module.exports = new KPIRepository();
+export default new KPIRepository();

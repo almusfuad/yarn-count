@@ -3,12 +3,12 @@
  * Reusable validators for common request patterns
  */
 
-const logger = require('../../../utils/logger');
+import logger from '../../../utils/logger.js';
 
 /**
  * Validate required query parameters
  */
-const validateQuery = (requiredParams) => {
+export const validateQuery = (requiredParams) => {
   return (req, res, next) => {
     const missing = requiredParams.filter(param => !req.query[param]);
 
@@ -27,7 +27,7 @@ const validateQuery = (requiredParams) => {
 /**
  * Validate required body parameters
  */
-const validateBody = (requiredParams) => {
+export const validateBody = (requiredParams) => {
   return (req, res, next) => {
     const missing = requiredParams.filter(param => req.body[param] === undefined);
 
@@ -46,7 +46,7 @@ const validateBody = (requiredParams) => {
 /**
  * Validate machine ID format
  */
-const validateMachineId = (req, res, next) => {
+export const validateMachineId = (req, res, next) => {
   const machineId = req.params.id || req.query.machineId || req.body.machineId;
 
   if (!machineId) {
@@ -69,7 +69,7 @@ const validateMachineId = (req, res, next) => {
 /**
  * Validate date range
  */
-const validateDateRange = (req, res, next) => {
+export const validateDateRange = (req, res, next) => {
   const { startDate, endDate } = req.query;
 
   if (!startDate || !endDate) {
@@ -113,7 +113,7 @@ const validateDateRange = (req, res, next) => {
 /**
  * Validate pagination parameters
  */
-const validatePagination = (req, res, next) => {
+export const validatePagination = (req, res, next) => {
   const { limit = 10, offset = 0 } = req.query;
 
   const limitNum = parseInt(limit, 10);
@@ -148,7 +148,7 @@ const validatePagination = (req, res, next) => {
 /**
  * Validate numeric value
  */
-const validateNumeric = (field) => {
+export const validateNumeric = (field) => {
   return (req, res, next) => {
     const value = req.body[field];
 
@@ -180,7 +180,7 @@ const validateNumeric = (field) => {
 /**
  * Validate enum value
  */
-const validateEnum = (field, allowedValues) => {
+export const validateEnum = (field, allowedValues) => {
   return (req, res, next) => {
     const value = req.body[field];
 
@@ -200,14 +200,4 @@ const validateEnum = (field, allowedValues) => {
 
     next();
   };
-};
-
-module.exports = {
-  validateQuery,
-  validateBody,
-  validateMachineId,
-  validateDateRange,
-  validatePagination,
-  validateNumeric,
-  validateEnum
 };

@@ -3,9 +3,9 @@
  * Core business logic for machine state management, status handling, and KPI calculations
  */
 
-const Machine = require('./Machine.model');
-const eventRepository = require('../Event/eventRepository');
-const logger = require('../../utils/logger');
+import { Machine } from './Machine.model.js';
+import eventRepository from '../Event/eventRepository.js';
+import logger from '../../utils/logger.js';
 
 class MachineService {
   constructor() {
@@ -317,4 +317,4 @@ class MachineService {
   }
 }
 
-module.exports = new MachineService();
+export default new MachineService();

@@ -3,8 +3,8 @@
  * Data access layer for Export collection in MongoDB
  */
 
-const { Export: ExportModel } = require('../../db/schemas');
-const logger = require('../../utils/logger');
+import { Export as ExportModel } from '../../db/schemas.js';
+import logger from '../../utils/logger.js';
 
 class ExportRepository {
   /**
@@ -165,4 +165,4 @@ class ExportRepository {
   }
 }
 
-module.exports = new ExportRepository();
+export default new ExportRepository();
