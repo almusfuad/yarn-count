@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useStore } from '../store/useStore';
+import * as apiClient from '../services/apiClient.js';
 
 export default function QualityForm() {
   const machines = useStore((state) => state.machines);
@@ -17,26 +18,18 @@ export default function QualityForm() {
 
     setLoading(true);
     try {
-      const response = await fetch('/api/quality', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          machineId: selectedMachine,
-          faultType,
-          severity,
-          description
-        })
+      await apiClient.logQuality({
+        machineId: selectedMachine,
+        faultType,
+        severity,
+        description
       });
 
-      if (response.ok) {
-        setSelectedMachine('');
-        setFaultType('');
-        setSeverity('warning');
-        setDescription('');
-        alert('Quality issue logged');
-      } else {
-        alert('Error logging quality issue');
-      }
+      setSelectedMachine('');
+      setFaultType('');
+      setSeverity('warning');
+      setDescription('');
+      alert('Quality issue logged');
     } catch (error) {
       console.error('Error:', error);
       alert('Error logging quality issue');

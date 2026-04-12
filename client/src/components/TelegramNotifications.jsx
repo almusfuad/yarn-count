@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useStore } from '../store/useStore';
 import { dummyTelegramStatus } from '../services/dummyData';
+import * as apiClient from '../services/apiClient.js';
 
 
 export default function TelegramNotifications() {
@@ -25,8 +26,7 @@ export default function TelegramNotifications() {
 
     const fetchStatus = async () => {
       try {
-        const response = await fetch('/api/telegram/status');
-        const data = await response.json();
+        const data = await apiClient.getTelegramStatus();
         setStatus(data);
         setNotifyOn(data.notifyOn || {});
         setLoading(false);
@@ -49,11 +49,7 @@ export default function TelegramNotifications() {
     setNotifyOn(updated);
 
     try {
-      await fetch('/api/telegram/config', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ notifyOn: updated })
-      });
+      await apiClient.updateTelegramConfig({ notifyOn: updated });
     } catch (err) {
       console.error('Failed to update Telegram config:', err);
     }

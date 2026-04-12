@@ -100,6 +100,60 @@ Open browser to: `http://localhost:5173`
 | `/api/quality` | POST | Log quality issue |
 | `/api/machines/:id/alerts/ack` | POST | Acknowledge alert |
 
+### API Versioning
+
+The API is versioned using URL path prefixes. The current stable version is **v1**.
+
+**Version Discovery**
+```bash
+# Get all available API versions
+GET /api/versions
+
+# Get versions for a specific module
+GET /api/versions?module=machines
+
+# Get detailed info for module version
+GET /api/versions?module=machines&version=1
+```
+
+**Using Versioned Endpoints**
+
+All endpoints are available at both:
+- **Versioned path**: `/api/v1/{endpoint}` (recommended)
+- **Legacy path**: `/api/{endpoint}` (v1 alias for backward compatibility)
+
+Example:
+```bash
+# Versioned (recommended)
+curl http://localhost:3000/api/v1/machines
+
+# Legacy (maps to v1)
+curl http://localhost:3000/api/machines
+```
+
+**Frontend API Client**
+
+Use the centralized API client from `client/src/services/apiClient.js`:
+
+```javascript
+import * as apiClient from './services/apiClient.js';
+
+// Get current API version
+console.log(apiClient.getApiVersion()); // 'v1'
+
+// Make API calls (automatically versioned)
+const machines = await apiClient.getMachines();
+const dashboard = await apiClient.getDashboard();
+await apiClient.logDowntime({ machineId: 'M001', reason: 'Maintenance' });
+await apiClient.logQuality({ machineId: 'M001', faultType: 'Yarn tension' });
+await apiClient.logRollWeight({ machineId: 'M001', weight: 12.5 });
+```
+
+To migrate to a future API version (e.g., v2), update a single constant in `apiClient.js`:
+```javascript
+const API_VERSION = 'v2'; // Change once, all components use new version
+```
+
 ### Frontend (React + Zustand)
 
 **State Management (`useStore.js`)**

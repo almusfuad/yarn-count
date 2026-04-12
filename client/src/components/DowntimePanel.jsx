@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useStore } from '../store/useStore';
+import * as apiClient from '../services/apiClient.js';
 
 export default function DowntimePanel() {
   const machines = useStore((state) => state.machines);
@@ -32,22 +33,16 @@ export default function DowntimePanel() {
     }
 
     try {
-      const response = await fetch('/api/downtime', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          machineId,
-          reason: reason || 'No Reason Selected',
-          remarks
-        })
+      await apiClient.logDowntime({
+        machineId,
+        reason: reason || 'No Reason Selected',
+        remarks
       });
 
-      if (response.ok) {
-        setSubmitted(true);
-        setReason('');
-        setRemarks('');
-        setTimeout(() => setSubmitted(false), 2000);
-      }
+      setSubmitted(true);
+      setReason('');
+      setRemarks('');
+      setTimeout(() => setSubmitted(false), 2000);
     } catch (err) {
       console.error('Failed to submit downtime log:', err);
     }

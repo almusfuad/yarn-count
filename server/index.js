@@ -30,14 +30,20 @@ import logger from './utils/logger.js';
 
 // Middleware
 import { errorHandler, notFoundHandler } from './modules/Shared/middleware/errorHandler.js';
+import { apiVersioningMiddleware, addVersionToResponse } from './middleware/apiVersioning.js';
 
-// Routes from modules
-import machineRoutes from './modules/Machine/machine.routes.js';
-import dashboardRoutes from './modules/Dashboard/dashboard.routes.js';
-import logsRoutes from './modules/Logs/logs.routes.js';
-import eventRoutes from './modules/Event/event.routes.js';
-import exportsRoutes from './modules/Export/exports.routes.js';
-import healthRoutes from './modules/Health/health.routes.js';
+// API Router and versioning
+import initializeApiRouter from './routes/apiRouter.js';
+
+// V1 Routes from modules
+import machineRoutesV1 from './modules/Machine/v1.routes.js';
+import dashboardRoutesV1 from './modules/Dashboard/v1.routes.js';
+import logsRoutesV1 from './modules/Logs/v1.routes.js';
+import eventRoutesV1 from './modules/Event/v1.routes.js';
+import exportsRoutesV1 from './modules/Export/v1.routes.js';
+import healthRoutesV1 from './modules/Health/v1.routes.js';
+import telegramRoutesV1 from './modules/Telegram/v1.routes.js';
+import versionRoutes from './modules/Version/version.routes.js';
 
 const app = express();
 const server = http.createServer(app);
@@ -63,23 +69,20 @@ globalThis.services = {
   mqttService
 };
 
-// Mount routes
-app.use('/api/machines', machineRoutes);
-app.use('/api/dashboard', dashboardRoutes);
-app.use('/api', logsRoutes);
-app.use('/api/history', eventRoutes);
-app.use('/api/exports', exportsRoutes);
-app.use('/api/health', healthRoutes);
-
-// Telegram notification routes
-app.get('/api/telegram/status', (req, res) => {
-  res.json(telegram.getStatus());
+// Initialize versioned API router
+const apiRouter = await initializeApiRouter({
+  machineRoutesV1,
+  dashboardRoutesV1,
+  logsRoutesV1,
+  eventRoutesV1,
+  exportsRoutesV1,
+  healthRoutesV1,
+  telegramRoutesV1,
+  versionRoutes
 });
 
-app.post('/api/telegram/config', (req, res) => {
-  telegram.updateConfig(req.body);
-  res.json({ ok: true });
-});
+// Mount API with versioning middleware
+app.use('/api', apiVersioningMiddleware, addVersionToResponse, apiRouter);
 
 // Health check route (legacy support)
 app.get('/health', async (req, res) => {

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useStore } from '../store/useStore';
+import * as apiClient from '../services/apiClient.js';
 
 export default function RollPanel() {
   const machines = useStore((state) => state.machines);
@@ -17,18 +18,13 @@ export default function RollPanel() {
 
     setLoading(true);
     try {
-      const response = await fetch('/api/roll-weight', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ machineId: selectedMachine, weight: parseFloat(weight) })
+      await apiClient.logRollWeight({
+        machineId: selectedMachine,
+        weight: parseFloat(weight)
       });
 
-      if (response.ok) {
-        setWeight('');
-        alert('Roll weight logged successfully');
-      } else {
-        alert('Error logging roll weight');
-      }
+      setWeight('');
+      alert('Roll weight logged successfully');
     } catch (error) {
       console.error('Error:', error);
       alert('Error logging roll weight');

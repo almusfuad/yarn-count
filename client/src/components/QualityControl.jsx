@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useStore } from '../store/useStore';
+import * as apiClient from '../services/apiClient.js';
 
 
 const FAULT_TYPES = ['Yarn Breakage', 'Dropped Stitch', 'Tension Error', 'Yarn Contamination', 'Knot', 'Other'];
@@ -40,26 +41,20 @@ export default function QualityControl() {
     }
 
     try {
-      const response = await fetch('/api/quality', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          machineId: selectedMachine,
-          faultType,
-          severity: severity.toLowerCase(),
-          description
-        })
+      await apiClient.logQuality({
+        machineId: selectedMachine,
+        faultType,
+        severity: severity.toLowerCase(),
+        description
       });
 
-      if (response.ok) {
-        setSubmitted(true);
-        setSelectedFloor('');
-        setSelectedMachine('');
-        setFaultType('');
-        setSeverity('');
-        setDescription('');
-        setTimeout(() => setSubmitted(false), 2000);
-      }
+      setSubmitted(true);
+      setSelectedFloor('');
+      setSelectedMachine('');
+      setFaultType('');
+      setSeverity('');
+      setDescription('');
+      setTimeout(() => setSubmitted(false), 2000);
     } catch (err) {
       console.error('Failed to submit quality fault:', err);
     }

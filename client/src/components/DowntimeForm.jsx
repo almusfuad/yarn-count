@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useStore } from '../store/useStore';
+import * as apiClient from '../services/apiClient.js';
 
 export default function DowntimeForm() {
   const machines = useStore((state) => state.machines);
@@ -16,24 +17,16 @@ export default function DowntimeForm() {
 
     setLoading(true);
     try {
-      const response = await fetch('/api/downtime', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          machineId: selectedMachine,
-          reason,
-          remarks
-        })
+      await apiClient.logDowntime({
+        machineId: selectedMachine,
+        reason,
+        remarks
       });
 
-      if (response.ok) {
-        setSelectedMachine('');
-        setReason('');
-        setRemarks('');
-        alert('Downtime logged');
-      } else {
-        alert('Error logging downtime');
-      }
+      setSelectedMachine('');
+      setReason('');
+      setRemarks('');
+      alert('Downtime logged');
     } catch (error) {
       console.error('Error:', error);
       alert('Error logging downtime');
