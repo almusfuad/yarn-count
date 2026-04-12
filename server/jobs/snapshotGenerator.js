@@ -1,5 +1,6 @@
 const schedule = require('node-schedule');
-const { KPISnapshot, Event } = require('../db/schemas');
+const eventRepository = require('../modules/Event/eventRepository');
+const kpiRepository = require('../modules/Event/kpiRepository');
 const { calculateKPIMetrics } = require('../utils/snapshotCalculator');
 const logger = require('../utils/logger');
 
@@ -23,10 +24,8 @@ async function generateDailySnapshots() {
     const dayEnd = new Date(yesterday);
     dayEnd.setHours(23, 59, 59, 999);
 
-    // Get all unique machineIds from yesterday's events
-    const machines = await Event.distinct('machineId', {
-      timestamp: { $gte: yesterday, $lte: dayEnd },
-    });
+    // Get all unique machineIds from yesterday's events via repository
+    const machines = await eventRepository.getDistinctMachineIds();
 
     if (machines.length === 0) {
       logger.info('✅ No events found for daily snapshot generation');
@@ -38,21 +37,28 @@ async function generateDailySnapshots() {
     // Create snapshot for each machine
     for (const machineId of machines) {
       try {
+        // Check if snapshot already exists
+        const exists = await kpiRepository.snapshotExists(machineId, yesterday, 'daily');
+        if (exists) {
+          logger.info(`⏭️  Daily snapshot already exists for ${machineId}`);
+          continue;
+        }
+
         const metrics = await calculateKPIMetrics(machineId, yesterday, dayEnd);
 
-        const snapshot = new KPISnapshot({
+        // Save snapshot via repository
+        await kpiRepository.saveSnapshot({
           machineId,
           period: 'daily',
           snapshotDate: yesterday,
           metrics,
-          createdAt: new Date(),
+          createdAt: new Date()
         });
 
-        await snapshot.save();
         snapshotsCreated++;
       } catch (err) {
         logger.error(
-          `Failed to generate daily snapshot for ${machineId}: ${err.message}`
+          `❌ Failed to generate daily snapshot for ${machineId}: ${err.message}`
         );
       }
     }
@@ -84,10 +90,8 @@ async function generateWeeklySnapshots() {
     weekEnd.setUTCDate(weekEnd.getUTCDate() + 6);
     weekEnd.setUTCHours(23, 59, 59, 999);
 
-    // Get all unique machineIds from last week's events
-    const machines = await Event.distinct('machineId', {
-      timestamp: { $gte: weekStart, $lte: weekEnd },
-    });
+    // Get all unique machineIds from last week's events via repository
+    const machines = await eventRepository.getDistinctMachineIds();
 
     if (machines.length === 0) {
       logger.info('✅ No events found for weekly snapshot generation');
@@ -99,21 +103,28 @@ async function generateWeeklySnapshots() {
     // Create snapshot for each machine
     for (const machineId of machines) {
       try {
+        // Check if snapshot already exists
+        const exists = await kpiRepository.snapshotExists(machineId, weekStart, 'weekly');
+        if (exists) {
+          logger.info(`⏭️  Weekly snapshot already exists for ${machineId}`);
+          continue;
+        }
+
         const metrics = await calculateKPIMetrics(machineId, weekStart, weekEnd);
 
-        const snapshot = new KPISnapshot({
+        // Save snapshot via repository
+        await kpiRepository.saveSnapshot({
           machineId,
           period: 'weekly',
-          snapshotDate: weekStart, // Snapshot date is the start of the week
+          snapshotDate: weekStart,
           metrics,
-          createdAt: new Date(),
+          createdAt: new Date()
         });
 
-        await snapshot.save();
         snapshotsCreated++;
       } catch (err) {
         logger.error(
-          `Failed to generate weekly snapshot for ${machineId}: ${err.message}`
+          `❌ Failed to generate weekly snapshot for ${machineId}: ${err.message}`
         );
       }
     }
@@ -123,6 +134,53 @@ async function generateWeeklySnapshots() {
     logger.error(`❌ Weekly snapshot generation failed: ${error.message}`);
   }
 }
+
+/**
+ * Start the snapshot generator jobs
+ * Called on server startup
+ */
+function startSnapshotGenerator() {
+  try {
+    // Daily job: 00:05 UTC every day
+    const dailyCron = process.env.SNAPSHOT_DAILY_CRON || '0 5 * * *';
+    dailyJob = schedule.scheduleJob(dailyCron, generateDailySnapshots);
+    logger.info(`✅ Daily snapshot job scheduled: ${dailyCron}`);
+
+    // Weekly job: 00:10 UTC every Sunday
+    const weeklyCron = process.env.SNAPSHOT_WEEKLY_CRON || '0 10 * * 0';
+    weeklyJob = schedule.scheduleJob(weeklyCron, generateWeeklySnapshots);
+    logger.info(`✅ Weekly snapshot job scheduled: ${weeklyCron}`);
+
+    // Optionally run on startup (commented out for now)
+    // generateDailySnapshots();
+    // generateWeeklySnapshots();
+  } catch (error) {
+    logger.error(`❌ Error starting snapshot generator: ${error.message}`);
+    throw error;
+  }
+}
+
+/**
+ * Stop the snapshot generator jobs
+ * Called on server shutdown
+ */
+function stopSnapshotGenerator() {
+  if (dailyJob) {
+    dailyJob.cancel();
+    logger.info('✅ Daily snapshot job cancelled');
+  }
+  if (weeklyJob) {
+    weeklyJob.cancel();
+    logger.info('✅ Weekly snapshot job cancelled');
+  }
+}
+
+module.exports = {
+  generateDailySnapshots,
+  generateWeeklySnapshots,
+  startSnapshotGenerator,
+  stopSnapshotGenerator,
+};
 
 /**
  * Start the snapshot generator jobs

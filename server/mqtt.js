@@ -1,98 +1,86 @@
-// MQTT client and message router
+/**
+ * MQTT Client Connection Management
+ * Delegates message handling to via mqttService
+ */
 
 const mqtt = require('mqtt');
-const {
-  handleMachineStatus,
-  handleRawData,
-  handleProblem
-} = require('./machines');
-const { broadcast } = require('./broadcast');
+const mqttService = require('./modules/MQTT/mqttService');
+const logger = require('./utils/logger');
 
 const MQTT_BROKER = process.env.MQTT_BROKER || 'mqtt://localhost:1883';
 
 let client = null;
 
-function handleMqttMessage(topic, message) {
-  try {
-    const messageStr = message.toString();
-    console.log(`\n[MQTT-RCV] ═══════════════════════════════════════`);
-    console.log(`[MQTT-RCV] TOPIC  → ${topic}`);
-    console.log(`[MQTT-RCV] PAYLOAD→ ${messageStr}`);
-
-    const parts = topic.split('/');
-    if (parts.length < 3) {
-      console.error(`[MQTT-RCV] ✗ Invalid topic format: ${topic} (expected Device/machineId/type)`);
-      return;
-    }
-
-    const [, machineId, msgType] = parts;
-    let payload;
-
-    try {
-      payload = JSON.parse(messageStr);
-    } catch (parseErr) {
-      console.error(`[MQTT-RCV] ✗ JSON parse error: ${parseErr.message}`);
-      return;
-    }
-
-    switch (msgType) {
-      case 'machine_status':
-        handleMachineStatus(machineId, payload);
-        break;
-      case 'machine_rawdata':
-        handleRawData(machineId, payload);
-        break;
-      case 'problem':
-        handleProblem(machineId, payload);
-        break;
-      default:
-        console.warn(`[MQTT-RCV] ⚠ Unknown message type: ${msgType}`);
-    }
-  } catch (err) {
-    console.error(`[MQTT-RCV] ✗ Unexpected error: ${err.message}`);
-  }
-}
-
 function startMqtt() {
-  console.log(`Connecting to MQTT broker: ${MQTT_BROKER}`);
-  
+  logger.info(`🔗 Connecting to MQTT broker: ${MQTT_BROKER}`);
+
   client = mqtt.connect(MQTT_BROKER);
 
   client.on('connect', () => {
-    console.log('MQTT connected');
+    logger.info('✅ MQTT connected');
     client.subscribe('Device/+/+', (err) => {
       if (err) {
-        console.error('Subscribe error:', err);
+        logger.error('❌ Subscribe error:', err.message);
       } else {
-        console.log('Subscribed to Device/+/+');
+        logger.info('📡 Subscribed to Device/+/+ topic');
       }
     });
   });
 
   client.on('message', (topic, message) => {
     try {
-      handleMqttMessage(topic, message);
+      logger.info(`\n[MQTT-RCV] ${'═'.repeat(50)}`);
+      logger.info(`[MQTT-RCV] TOPIC   → ${topic}`);
+      logger.info(`[MQTT-RCV] PAYLOAD → ${message.toString()}`);
+
+      // Parse topic and delegate to service
+      const parsed = mqttService.parseTopicAndPayload(topic, message);
+      if (!parsed) {
+        logger.warn(`⚠️ Failed to parse MQTT message on topic: ${topic}`);
+        return;
+      }
+
+      const { machineId, msgType, payload } = parsed;
+
+      // Validate payload structure
+      if (!mqttService.validatePayload(msgType, payload)) {
+        logger.warn(`⚠️ Invalid payload structure for ${msgType}`);
+        return;
+      }
+
+      // Delegate to service for handling
+      mqttService.handleMqttMessage(machineId, msgType, payload);
     } catch (err) {
-      console.error(`Error processing MQTT message on ${topic}:`, err);
+      logger.error(`❌ Error processing MQTT message on ${topic}:`, err.message);
     }
   });
 
   client.on('error', (err) => {
-    console.error('MQTT error:', err);
+    logger.error('❌ MQTT error:', err.message);
   });
 
   client.on('disconnect', () => {
-    console.log('MQTT disconnected');
+    logger.warn('⚠️ MQTT disconnected');
+  });
+
+  client.on('offline', () => {
+    logger.warn('⚠️ MQTT client offline');
+  });
+
+  client.on('reconnect', () => {
+    logger.info('🔄 MQTT reconnecting...');
   });
 }
 
 function stopMqtt() {
   if (client) {
+    logger.info('Stopping MQTT client...');
     client.end();
   }
 }
 
 module.exports = {
   startMqtt,
-  stopMqtt
+  stopMqtt,
+  client // Export for testing/debugging
 };

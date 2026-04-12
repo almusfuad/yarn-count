@@ -7,22 +7,30 @@ const cors = require('cors');
 const path = require('path');
 require('dotenv').config({ path: path.join(__dirname, '..', '.env') });
 
-const machinesModule = require('./machines');
+// Services from modules
+const machineService = require('./modules/Machine/machineService');
+const dashboardService = require('./modules/Dashboard/dashboardService');
+const telegramService = require('./modules/Telegram/telegramService');
+const mqttService = require('./modules/MQTT/mqttService');
+
+// Infrastructure
 const { init: initBroadcast, sendToClient, broadcast } = require('./broadcast');
 const { startMqtt } = require('./mqtt');
 const telegram = require('./telegram');
-const { logEvent } = require('./db/eventLogger');
 const { connectToMongoDB, disconnectFromMongoDB } = require('./db/mongodb');
 const { initializeIndexes } = require('./db/schemas');
 const { startSnapshotGenerator, stopSnapshotGenerator } = require('./jobs/snapshotGenerator');
 const { startDataExporter, stopDataExporter } = require('./jobs/dataExporter');
 const logger = require('./utils/logger');
 
+// Middleware
+const { errorHandler, notFoundHandler } = require('./modules/Shared/middleware/errorHandler');
+
 const app = express();
 const server = http.createServer(app);
 const wss = new WebSocketServer({ server });
 
-// Middleware
+// Request middleware
 app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, '../client/dist')));
@@ -30,43 +38,25 @@ app.use(express.static(path.join(__dirname, '../client/dist')));
 // Initialize broadcast module
 initBroadcast(wss);
 
-// Set broadcast callback in machines module
-machinesModule.setBroadcast(broadcast);
+// Initialize services with broadcast function
+machineService.setBroadcast(broadcast);
+telegramService.setTelegramClient(telegram.client);
 
-// Routes
-app.use('/api/machines', require('./routes/machines'));
-app.use('/api/dashboard', require('./routes/dashboard'));
-app.use('/api', require('./routes/logs'));
-app.use('/api/history', require('./routes/history'));
-app.use('/api/exports', require('./routes/exports'));
-app.use('/api/health', require('./routes/health'));
+// Attach services to global context for jobs and other modules (optional)
+global.services = {
+  machineService,
+  dashboardService,
+  telegramService,
+  mqttService
+};
 
-// Serve roll-weight and alerts through direct routes
-app.post('/api/roll-weight', (req, res) => {
-  const { machineId, weight } = req.body;
-  if (!machineId || weight === undefined) {
-    return res.status(400).json({ error: 'machineId and weight are required' });
-  }
-  const log = machinesModule.addRollWeight(machineId, weight);
-  
-  // Log roll weight event to MongoDB (non-blocking)
-  logEvent('roll_weight', machineId, {
-    weight,
-    rollNumber: log.rollNumber,
-    timestamp: log.timestamp
-  });
-  
-  res.json(log);
-});
-
-app.post('/api/alerts/ack', (req, res) => {
-  const { machineId, alertId } = req.body;
-  if (!machineId || !alertId) {
-    return res.status(400).json({ error: 'machineId and alertId are required' });
-  }
-  machinesModule.acknowledgeAlert(machineId, alertId);
-  res.json({ acked: true });
-});
+// Routes from modules
+app.use('/api/machines', require('./modules/Machine/machine.routes'));
+app.use('/api/dashboard', require('./modules/Dashboard/dashboard.routes'));
+app.use('/api', require('./modules/Logs/logs.routes'));
+app.use('/api/history', require('./modules/Event/event.routes'));
+app.use('/api/exports', require('./modules/Export/exports.routes'));
+app.use('/api/health', require('./modules/Health/health.routes'));
 
 // Telegram notification routes
 app.get('/api/telegram/status', (req, res) => {
@@ -78,27 +68,42 @@ app.post('/api/telegram/config', (req, res) => {
   res.json({ ok: true });
 });
 
-// Legacy health check (redirected to /api/health/system)
-app.get('/health', (req, res) => {
-  const { getConnectionStatus } = require('./db/mongodb');
-  const dbStatus = getConnectionStatus();
-  res.json({ status: 'ok', mongodb: dbStatus });
+// Health check route (legacy support)
+app.get('/health', async (req, res) => {
+  try {
+    const mongoose = require('mongoose');
+    const state = mongoose.connection.readyState;
+    res.json({
+      status: 'ok',
+      mongodb: {
+        connected: state === 1,
+        state: state === 1 ? 'connected' : 'disconnected'
+      }
+    });
+  } catch (error) {
+    res.status(503).json({ status: 'error', message: error.message });
+  }
 });
 
-// SPA fallback — must be after all API routes
+// SPA fallback — must be after all API routes but before error handler
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, '../client/dist/index.html'));
 });
 
+// 404 handler (before error handler)
+app.use(notFoundHandler);
+
+// Error handler middleware (last)
+app.use(errorHandler);
+
 // WebSocket connection handler
 wss.on('connection', (ws) => {
-  console.log('Client connected');
-  
+  logger.info('✅ Client connected');
+
   // Send initial state
-  const machines = machinesModule.getAllMachines();
-  const kpis = machinesModule.getDashboardKPIs();
-  const summaries = machines.map(m => machinesModule.getMachineSummary(m));
-  
+  const summaries = machineService.getAllMachineSummaries();
+  const kpis = dashboardService.calculateDashboardMetrics();
+
   sendToClient(ws, 'init', {
     machines: summaries,
     kpis
@@ -107,23 +112,23 @@ wss.on('connection', (ws) => {
   ws.on('message', (data) => {
     try {
       const message = JSON.parse(data);
-      console.log('Received message from client:', message.type);
+      logger.info(`📨 Received message from client: ${message.type}`);
       // Handle any client messages if needed
     } catch (err) {
-      console.error('Error parsing client message:', err);
+      logger.error('❌ Error parsing client message:', err.message);
     }
   });
 
   ws.on('close', () => {
-    console.log('Client disconnected');
+    logger.info('👋 Client disconnected');
   });
 
   ws.on('error', (err) => {
-    console.error('WebSocket error:', err);
+    logger.error('❌ WebSocket error:', err.message);
   });
 });
 
-// Start MQTT
+// Start MQTT (with service integration)
 startMqtt();
 
 // Server Startup Sequence

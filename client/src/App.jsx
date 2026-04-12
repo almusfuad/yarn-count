@@ -40,7 +40,7 @@ export default function App() {
   }, []);
 
   return (
-    <div className="flex flex-col min-h-screen w-screen bg-neutral-100 gap-2 sm:gap-4">
+    <div className="flex flex-col min-h-screen w-full bg-neutral-100 gap-2 sm:gap-4">
       <Header />
       
       <main className="flex-1 w-full px-2 sm:px-3 md:px-4 py-2 sm:py-3 md:py-4">

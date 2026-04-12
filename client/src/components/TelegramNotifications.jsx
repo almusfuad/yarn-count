@@ -228,9 +228,11 @@ export default function TelegramNotifications() {
       </div>
 
       {showAllNotifications && (
-        <div className="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center p-3 sm:p-4">
+        <div 
+          className="fixed inset-0 z-50 bg-gray-500 bg-opacity-10 pointer-events-none flex items-center justify-center p-3 sm:p-4"
+        >
           <div 
-            className="bg-white rounded-xs shadow-lg w-full sm:max-w-2xl max-h-screen sm:max-h-96 flex flex-col"
+            className="bg-white rounded-xs shadow-lg w-full sm:max-w-2xl max-h-screen sm:max-h-96 flex flex-col pointer-events-auto"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center p-3 sm:p-5 border-b border-neutral-200 gap-2 sm:gap-0">
