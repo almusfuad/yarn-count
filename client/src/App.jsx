@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { useStore } from './store/useStore';
 import { initSocket, closeSocket } from './services/socket';
 import { startDummyUpdates, stopDummyUpdates } from './services/dummyUpdater';
+import { showSuccessToast } from './utils/notificationUtils';
 import Header from './components/Header';
 import SetupPanel from './components/SetupPanel';
 import KpiCards from './components/KpiCards';
@@ -17,6 +18,7 @@ export default function App() {
   const isDummyMode = useStore((state) => state.isDummyMode);
   const loadDummyData = useStore((state) => state.loadDummyData);
   const clearLiveData = useStore((state) => state.clearLiveData);
+  const socketStatus = useStore((state) => state.socket.status);
 
   // Mode-switching effect
   useEffect(() => {
@@ -38,6 +40,13 @@ export default function App() {
       stopDummyUpdates();
     };
   }, []);
+
+  // Socket status notification effect
+  useEffect(() => {
+    if (socketStatus === 'connected' && !isDummyMode) {
+      showSuccessToast('Connected to server');
+    }
+  }, [socketStatus, isDummyMode]);
 
   return (
     <div className="flex flex-col min-h-screen w-full bg-neutral-100 gap-2 sm:gap-4">

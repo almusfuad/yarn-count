@@ -1,19 +1,20 @@
 import { create } from 'zustand';
 import { dummyMachines, dummyKpis, dummyAlerts, dummyEvents } from '../services/dummyData';
+import { showErrorToast } from '../utils/notificationUtils';
 
 // Helper function to calculate utilization
 function calculateUtilization(machine) {
-  if (!machine.runtimeSeconds || (!machine.runtimeSeconds && !machine.downtimeSeconds)) {
+  if (!machine.runtimeSeconds && !machine.downtimeSeconds) {
     return 0;
   }
-  const totalSeconds = (machine.runtimeSeconds || 0) + (machine.downtimeSeconds || 0);
+  const totalSeconds = (machine.runtimeSeconds ?? 0) + (machine.downtimeSeconds ?? 0);
   if (totalSeconds === 0) return 0;
-  return ((machine.runtimeSeconds || 0) / totalSeconds) * 100;
+  return ((machine.runtimeSeconds ?? 0) / totalSeconds) * 100;
 }
 
 // Helper function to format seconds to HH:MM format
 function formatTime(seconds) {
-  if (!seconds || seconds < 0) return '00:00';
+  if (seconds === null || seconds === undefined || seconds < 0) return '00:00';
   const hours = Math.floor(seconds / 3600);
   const minutes = Math.floor((seconds % 3600) / 60);
   return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
@@ -61,6 +62,23 @@ export const useStore = create((set, get) => ({
     shift: 'Morning (06:00–14:00)'
   },
 
+  // Socket management (Phase 4)
+  socket: {
+    instance: null,
+    status: 'disconnected', // 'connecting' | 'connected' | 'error' | 'disconnected' | 'demo'
+    lastError: null,
+    reconnectAttempts: 0,
+    nextReconnectIn: 0, // seconds until next attempt
+    preventReconnect: false
+  },
+
+  socketMetrics: {
+    messagesReceived: 0,
+    messagesSent: 0,
+    reconnectCount: 0,
+    connectionDuration: 0
+  },
+
   // Actions
   setConnectionStatus: (status) => set({ connectionStatus: status }),
 
@@ -72,13 +90,13 @@ export const useStore = create((set, get) => ({
       machineList.forEach((m) => {
         machines[m.machineId] = {
           ...m,
-          lastUpdated: m.lastUpdated || new Date().toISOString(),
-          utilization: m.utilization !== undefined ? m.utilization : calculateUtilization(m),
-          runtime: m.runtime || formatTime(m.runtimeSeconds || 0),
-          downtime: m.downtime || formatTime(m.downtimeSeconds || 0),
-          currentRollCount: m.currentRollCount !== undefined ? m.currentRollCount : (m.totalCount % (m.ROLL_TARGET || 500)),
-          ROLL_TARGET: m.ROLL_TARGET || 500,
-          unackedAlerts: m.unackedAlerts || 0
+          lastUpdated: m.lastUpdated ?? new Date().toISOString(),
+          utilization: m.utilization ?? calculateUtilization(m),
+          runtime: m.runtime ?? formatTime(m.runtimeSeconds ?? 0),
+          downtime: m.downtime ?? formatTime(m.downtimeSeconds ?? 0),
+          currentRollCount: m.currentRollCount ?? (m.totalCount % (m.ROLL_TARGET ?? 500)),
+          ROLL_TARGET: m.ROLL_TARGET ?? 500,
+          unackedAlerts: m.unackedAlerts ?? 0
         };
       });
       return { machines };
@@ -88,12 +106,12 @@ export const useStore = create((set, get) => ({
   calculateKpis: () =>
     set((state) => {
       const machines = Object.values(state.machines);
-      const totalCount = machines.reduce((sum, m) => sum + (m.totalCount || 0), 0);
+      const totalCount = machines.reduce((sum, m) => sum + (m.totalCount ?? 0), 0);
       const activeMachines = machines.filter((m) => m.status === 'ON').length;
       const totalMachines = machines.length;
-      const totalRuntime = machines.reduce((sum, m) => sum + (m.runtimeSeconds || 0), 0);
-      const totalDowntime = machines.reduce((sum, m) => sum + (m.downtimeSeconds || 0), 0);
-      const totalRolls = machines.reduce((sum, m) => sum + (m.rollsCompleted || 0), 0);
+      const totalRuntime = machines.reduce((sum, m) => sum + (m.runtimeSeconds ?? 0), 0);
+      const totalDowntime = machines.reduce((sum, m) => sum + (m.downtimeSeconds ?? 0), 0);
+      const totalRolls = machines.reduce((sum, m) => sum + (m.rollsCompleted ?? 0), 0);
       const totalKg = totalRolls * 0.7; // Approximate: ~0.7kg per roll
       const utilization = totalRuntime + totalDowntime > 0 ? (totalRuntime / (totalRuntime + totalDowntime)) * 100 : 0;
       const capacityPercentage = totalMachines > 0 ? (activeMachines / totalMachines) * 100 : 0;
@@ -127,9 +145,9 @@ export const useStore = create((set, get) => ({
           ...state.machines[machineId],
           ...updates
         }),
-        runtime: updates.runtime !== undefined ? updates.runtime : formatTime(updates.runtimeSeconds || state.machines[machineId]?.runtimeSeconds || 0),
-        downtime: updates.downtime !== undefined ? updates.downtime : formatTime(updates.downtimeSeconds || state.machines[machineId]?.downtimeSeconds || 0),
-        currentRollCount: updates.currentRollCount !== undefined ? updates.currentRollCount : ((updates.totalCount || state.machines[machineId]?.totalCount || 0) % (updates.ROLL_TARGET || state.machines[machineId]?.ROLL_TARGET || 500))
+        runtime: updates.runtime !== undefined ? updates.runtime : formatTime(updates.runtimeSeconds ?? state.machines[machineId]?.runtimeSeconds ?? 0),
+        downtime: updates.downtime !== undefined ? updates.downtime : formatTime(updates.downtimeSeconds ?? state.machines[machineId]?.downtimeSeconds ?? 0),
+        currentRollCount: updates.currentRollCount !== undefined ? updates.currentRollCount : ((updates.totalCount ?? state.machines[machineId]?.totalCount ?? 0) % (updates.ROLL_TARGET ?? state.machines[machineId]?.ROLL_TARGET ?? 500))
       };
       
       return {
@@ -167,7 +185,7 @@ export const useStore = create((set, get) => ({
     set((state) => ({
       notificationBadge: {
         ...state.notificationBadge,
-        [severity]: (state.notificationBadge[severity] || 0) + 1
+        [severity]: (state.notificationBadge[severity] ?? 0) + 1
       }
     })),
 
@@ -207,21 +225,21 @@ export const useStore = create((set, get) => ({
           ...m,
           lastUpdated: new Date().toISOString(),
           utilization: calculateUtilization(m),
-          runtime: formatTime(m.runtimeSeconds || 0),
-          downtime: formatTime(m.downtimeSeconds || 0),
-          currentRollCount: m.totalCount % (m.ROLL_TARGET || 500),
-          ROLL_TARGET: m.ROLL_TARGET || 500,
+          runtime: formatTime(m.runtimeSeconds ?? 0),
+          downtime: formatTime(m.downtimeSeconds ?? 0),
+          currentRollCount: (m.totalCount ?? 0) % (m.ROLL_TARGET ?? 500),
+          ROLL_TARGET: m.ROLL_TARGET ?? 500,
           unackedAlerts: 0
         };
       });
       
       // Calculate KPIs from machines
-      const totalCount = Object.values(machines).reduce((sum, m) => sum + (m.totalCount || 0), 0);
+      const totalCount = Object.values(machines).reduce((sum, m) => sum + (m.totalCount ?? 0), 0);
       const activeMachines = Object.values(machines).filter((m) => m.status === 'ON').length;
       const totalMachines = Object.keys(machines).length;
-      const totalRuntime = Object.values(machines).reduce((sum, m) => sum + (m.runtimeSeconds || 0), 0);
-      const totalDowntime = Object.values(machines).reduce((sum, m) => sum + (m.downtimeSeconds || 0), 0);
-      const totalRolls = Object.values(machines).reduce((sum, m) => sum + (m.rollsCompleted || 0), 0);
+      const totalRuntime = Object.values(machines).reduce((sum, m) => sum + (m.runtimeSeconds ?? 0), 0);
+      const totalDowntime = Object.values(machines).reduce((sum, m) => sum + (m.downtimeSeconds ?? 0), 0);
+      const totalRolls = Object.values(machines).reduce((sum, m) => sum + (m.rollsCompleted ?? 0), 0);
       const totalKg = totalRolls * 0.7;
       const utilization = totalRuntime + totalDowntime > 0 ? (totalRuntime / (totalRuntime + totalDowntime)) * 100 : 0;
       const capacityPercentage = totalMachines > 0 ? (activeMachines / totalMachines) * 100 : 0;
@@ -250,6 +268,76 @@ export const useStore = create((set, get) => ({
         alerts: [...dummyAlerts],
         events: [...dummyEvents],
         connectionStatus: 'demo'
+      };
+    }),
+
+  // Socket management actions (Phase 4)
+  setSocketInstance: (instance) =>
+    set((state) => ({
+      socket: { ...state.socket, instance }
+    })),
+
+  setSocketStatus: (status) =>
+    set((state) => ({
+      socket: { ...state.socket, status }
+    })),
+
+  setSocketError: (error) =>
+    set((state) => {
+      // Trigger toast notification if error exists
+      if (error) {
+        showErrorToast(error);
+      }
+      return {
+        socket: {
+          ...state.socket,
+          lastError: error,
+          status: error ? 'error' : state.socket.status
+        }
+      };
+    }),
+
+  incrementReconnectAttempts: () =>
+    set((state) => ({
+      socket: {
+        ...state.socket,
+        reconnectAttempts: state.socket.reconnectAttempts + 1
+      },
+      socketMetrics: {
+        ...state.socketMetrics,
+        reconnectCount: state.socketMetrics.reconnectCount + 1
+      }
+    })),
+
+  setNextReconnectIn: (seconds) =>
+    set((state) => ({
+      socket: { ...state.socket, nextReconnectIn: seconds }
+    })),
+
+  resetSocket: () =>
+    set((state) => ({
+      socket: {
+        ...state.socket,
+        reconnectAttempts: 0,
+        nextReconnectIn: 0,
+        lastError: null,
+        status: 'connected'
+      }
+    })),
+
+  setPreventReconnect: (prevent) =>
+    set((state) => ({
+      socket: { ...state.socket, preventReconnect: prevent }
+    })),
+
+  recordSocketMessage: (direction) =>
+    set((state) => {
+      const key = direction === 'sent' ? 'messagesSent' : 'messagesReceived';
+      return {
+        socketMetrics: {
+          ...state.socketMetrics,
+          [key]: state.socketMetrics[key] + 1
+        }
       };
     }),
 

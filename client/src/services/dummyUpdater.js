@@ -34,8 +34,8 @@ export function startDummyUpdates() {
       if (machine && machine.status === 'ON') {
         // Simulate incremental production
         const increment = Math.floor(Math.random() * 5) + 1; // 1-5 count increase
-        const oldTotalCount = machine.totalCount || 0;
-        const rollTarget = machine.ROLL_TARGET || 5000;
+        const oldTotalCount = machine.totalCount ?? 0;
+        const rollTarget = machine.ROLL_TARGET ?? 5000;
         
         // Cap the increment so we don't exceed rollTarget for current roll
         const currentRollCount = oldTotalCount % rollTarget;
@@ -54,15 +54,15 @@ export function startDummyUpdates() {
         // Calculate if we just completed a roll (reached the rollTarget)
         const newRollProgress = newTotalCount % rollTarget;
         
-        let newRollsCompleted = machine.rollsCompleted || 0;
+        let newRollsCompleted = machine.rollsCompleted ?? 0;
         // If we reached the target boundary, increment rolls completed and reset count
         if (newRollProgress === 0 && cappedIncrement > 0) {
           newRollsCompleted += 1;
         }
         
         // Simulate runtime accumulation
-        const newRuntimeSeconds = (machine.runtimeSeconds || 0) + 5; // 5 seconds per update
-        const newDowntimeSeconds = (machine.downtimeSeconds || 0) + (Math.random() < 0.1 ? 5 : 0); // Occasional downtime
+        const newRuntimeSeconds = (machine.runtimeSeconds ?? 0) + 5; // 5 seconds per update
+        const newDowntimeSeconds = (machine.downtimeSeconds ?? 0) + (Math.random() < 0.1 ? 5 : 0); // Occasional downtime
         
         store.updateMachine(randomMachineId, {
           totalCount: newTotalCount,
@@ -79,13 +79,13 @@ export function startDummyUpdates() {
         if (Math.random() < 0.05) {
           store.updateMachine(randomMachineId, {
             status: 'ON',
-            downtimeSeconds: (machine.downtimeSeconds || 0) + 5, // Record final downtime
-            runtimeSeconds: (machine.runtimeSeconds || 0) // Start fresh runtime accumulation
+            downtimeSeconds: (machine.downtimeSeconds ?? 0) + 5, // Record final downtime
+            runtimeSeconds: (machine.runtimeSeconds ?? 0) // Start fresh runtime accumulation
           });
         } else {
           // Simulate downtime accumulation
           store.updateMachine(randomMachineId, {
-            downtimeSeconds: (machine.downtimeSeconds || 0) + 5
+            downtimeSeconds: (machine.downtimeSeconds ?? 0) + 5
           });
         }
         
