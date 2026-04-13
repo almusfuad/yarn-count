@@ -3,7 +3,7 @@
  * Handles HTTP requests for health checks
  */
 
-import mongoose from 'mongoose';
+import { getConnectionStatus } from '../../db/prisma.js';
 import exportService from '../Export/exportService.js';
 import logger from '../../utils/logger.js';
 
@@ -11,23 +11,17 @@ import logger from '../../utils/logger.js';
  * GET /api/health/db
  * Check database connectivity and health
  */
-export const checkDatabaseHealth = (req, res) => {
+export const checkDatabaseHealth = async (req, res) => {
   try {
-    const state = mongoose.connection.readyState;
-    const stateNames = {
-      0: 'disconnected',
-      1: 'connected',
-      2: 'connecting',
-      3: 'disconnecting'
-    };
+    const status = await getConnectionStatus();
+    const isHealthy = status.isConnected;
+    const httpStatus = isHealthy ? 200 : 503;
 
-    const isHealthy = state === 1;
-    const status = isHealthy ? 200 : 503;
-
-    res.status(status).json({
+    res.status(httpStatus).json({
       service: 'database',
       healthy: isHealthy,
-      state: stateNames[state],
+      state: status.status,
+      database: status.database,
       timestamp: new Date().toISOString()
     });
   } catch (error) {
@@ -72,8 +66,8 @@ export const checkExportHealth = async (req, res) => {
  */
 export const getOverallHealth = async (req, res) => {
   try {
-    const dbState = mongoose.connection.readyState;
-    const dbHealthy = dbState === 1;
+    const dbStatus = await getConnectionStatus();
+    const dbHealthy = dbStatus.isConnected;
 
     const exportStatus = await exportService.getExportStatus();
 
@@ -85,7 +79,8 @@ export const getOverallHealth = async (req, res) => {
       components: {
         database: {
           healthy: dbHealthy,
-          state: dbState === 1 ? 'connected' : 'disconnected'
+          state: dbStatus.status,
+          database: dbStatus.database
         },
         exports: {
           healthy: true,

@@ -1,4 +1,4 @@
-import { Event } from '../db/schemas.js';
+import { prisma } from '../db/prisma.js';
 
 /**
  * Calculate KPI metrics from raw events for a date range
@@ -7,10 +7,12 @@ import { Event } from '../db/schemas.js';
 export async function calculateKPIMetrics(machineId, startDate, endDate) {
   try {
     // Query all events for the machine in the date range
-    const events = await Event.find({
-      machineId,
-      timestamp: { $gte: startDate, $lte: endDate },
-    }).lean();
+    const events = await prisma.event.findMany({
+      where: {
+        machineId,
+        timestamp: { gte: startDate, lte: endDate },
+      },
+    });
 
     // Initialize metrics
     const metrics = {

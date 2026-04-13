@@ -1,0 +1,120 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Enums
+enum EventType {
+  pulse
+  status_change
+  problem
+  roll_weight
+  downtime
+  quality
+}
+
+enum SnapshotPeriod {
+  daily
+  weekly
+}
+
+enum ExportStatus {
+  pending
+  completed
+  failed
+}
+
+enum ExportType {
+  daily
+  weekly
+  manual
+}
+
+enum MachineStatus {
+  online
+  offline
+  maintenance
+  error
+}
+
+// Models
+model Machine {
+  id        String   @id
+  name      String?
+  status    MachineStatus @default(online)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  lastSeen  DateTime @default(now())
+
+  // Relations
+  events         Event[]
+  kpiSnapshots   KPISnapshot[]
+  exports        Export[]
+
+  @@map("machines")
+}
+
+model Event {
+  id        Int       @id @default(autoincrement())
+  machineId String
+  type      EventType
+  data      Json      @default("{}")
+  timestamp DateTime  @default(now())
+  createdAt DateTime  @default(now())
+
+  // Relations
+  machine   Machine   @relation(fields: [machineId], references: [id], onDelete: Cascade)
+
+  @@index([machineId, timestamp])
+  @@index([timestamp])
+  @@index([type])
+  @@map("events")
+}
+
+model KPISnapshot {
+  id           Int             @id @default(autoincrement())
+  machineId    String
+  period       SnapshotPeriod
+  snapshotDate DateTime
+  metrics      Json            @default("{}")
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+
+  // Relations
+  machine      Machine         @relation(fields: [machineId], references: [id], onDelete: Cascade)
+
+  @@unique([machineId, period, snapshotDate])
+  @@index([machineId, period, snapshotDate])
+  @@map("kpi_snapshots")
+}
+
+model Export {
+  id           Int          @id @default(autoincrement())
+  machineId    String
+  exportType   ExportType
+  dateRange    Json         @default("{}")
+  exportPath   String
+  recordCount  Int          @default(0)
+  status       ExportStatus @default(pending)
+  fileSize     Int          @default(0)
+  checksum     String?
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  // Relations
+  machine      Machine      @relation(fields: [machineId], references: [id], onDelete: Cascade)
+
+  @@index([machineId, status])
+  @@index([status])
+  @@map("exports")
+}

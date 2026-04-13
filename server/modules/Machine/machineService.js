@@ -5,6 +5,7 @@
 
 import { Machine } from './Machine.model.js';
 import eventRepository from '../Event/eventRepository.js';
+import { prisma } from '../../db/prisma.js';
 import logger from '../../utils/logger.js';
 
 class MachineService {
@@ -35,11 +36,28 @@ class MachineService {
   }
 
   /**
+   * Upsert machine in database (ensure machine record exists)
+   */
+  async ensureMachineExists(machineId) {
+    try {
+      await prisma.machine.upsert({
+        where: { id: machineId },
+        update: { lastSeen: new Date() },
+        create: { id: machineId, status: 'online', lastSeen: new Date() },
+      });
+    } catch (error) {
+      logger.error(`❌ Error ensuring machine exists: ${error.message}`);
+    }
+  }
+
+  /**
    * Get or create machine state
    */
   getOrCreateMachine(machineId) {
     if (!this.machines.has(machineId)) {
       this.machines.set(machineId, new Machine(machineId));
+      // Async: ensure machine exists in database (don't block on this)
+      this.ensureMachineExists(machineId);
     }
     return this.machines.get(machineId);
   }

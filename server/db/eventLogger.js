@@ -1,8 +1,8 @@
-import { Event } from './schemas.js';
+import { prisma } from './prisma.js';
 import logger from '../utils/logger.js';
 
 /**
- * Log an event to MongoDB asynchronously without blocking
+ * Log an event to PostgreSQL asynchronously without blocking
  * Returns immediately, write happens in background
  * 
  * @param {string} type - Event type: pulse, status_change, problem, roll_weight, downtime, quality
@@ -17,23 +17,22 @@ import logger from '../utils/logger.js';
 export async function logEvent(type, machineId, data) {
   try {
     // Fire and forget: don't wait for write to complete
-    // This ensures broadcast is not blocked by MongoDB writes
+    // This ensures broadcast is not blocked by PostgreSQL writes
     Promise.resolve().then(async () => {
       try {
-        const event = new Event({
-          type,
-          machineId,
-          timestamp: new Date(),
-          data,
-          createdAt: new Date(),
+        await prisma.event.create({
+          data: {
+            type,
+            machineId,
+            timestamp: new Date(),
+            data: data || {},
+          },
         });
-
-        await event.save();
         // Optionally log successful write (can be noisy for high-frequency pulses)
         // console.log(`✅ Event logged: ${type} for ${machineId}`);
       } catch (writeError) {
         // Log write errors but don't throw (non-blocking)
-        // Live data is unaffected if MongoDB write fails
+        // Live data is unaffected if PostgreSQL write fails
         console.error(
           `❌ Failed to log event (${type}, ${machineId}):`,
           writeError.message
@@ -65,11 +64,12 @@ export async function logEventBatch(events) {
           type: evt.type,
           machineId: evt.machineId,
           timestamp: new Date(),
-          data: evt.data,
-          createdAt: new Date(),
+          data: evt.data || {},
         }));
 
-        await Event.insertMany(formattedEvents);
+        await prisma.event.createMany({
+          data: formattedEvents,
+        });
         console.log(`✅ Batch logged: ${events.length} events`);
       } catch (writeError) {
         console.error(
@@ -92,11 +92,13 @@ export async function logEventBatch(events) {
  */
 export async function getEventCount(machineId, startDate, endDate) {
   try {
-    const count = await Event.countDocuments({
-      machineId,
-      timestamp: {
-        $gte: startDate,
-        $lte: endDate,
+    const count = await prisma.event.count({
+      where: {
+        machineId,
+        timestamp: {
+          gte: startDate,
+          lte: endDate,
+        },
       },
     });
     return count;
@@ -114,8 +116,8 @@ export async function queryEvents(machineId, startDate, endDate, type = null) {
     const query = {
       machineId,
       timestamp: {
-        $gte: startDate,
-        $lte: endDate,
+        gte: startDate,
+        lte: endDate,
       },
     };
 
@@ -123,9 +125,10 @@ export async function queryEvents(machineId, startDate, endDate, type = null) {
       query.type = type;
     }
 
-    const events = await Event.find(query)
-      .sort({ timestamp: -1 })
-      .lean();
+    const events = await prisma.event.findMany({
+      where: query,
+      orderBy: { timestamp: 'desc' },
+    });
     
     return events;
   } catch (error) {

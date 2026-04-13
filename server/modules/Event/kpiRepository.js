@@ -1,9 +1,9 @@
 /**
  * KPI Repository
- * Data access layer for KPI Snapshots collection in MongoDB
+ * Data access layer for KPI Snapshots collection in PostgreSQL
  */
 
-import { KPISnapshot } from '../../db/schemas.js';
+import { prisma } from '../../db/prisma.js';
 import logger from '../../utils/logger.js';
 
 class KPIRepository {
@@ -12,8 +12,9 @@ class KPIRepository {
    */
   async saveSnapshot(snapshotData) {
     try {
-      const snapshot = new KPISnapshot(snapshotData);
-      await snapshot.save();
+      const snapshot = await prisma.kPISnapshot.create({
+        data: snapshotData,
+      });
       logger.info(`✅ KPI snapshot saved for ${snapshotData.machineId} (${snapshotData.period})`);
       return snapshot;
     } catch (error) {
@@ -27,11 +28,13 @@ class KPIRepository {
    */
   async getSnapshot(machineId, snapshotDate, period = 'daily') {
     try {
-      const snapshot = await KPISnapshot.findOne({
-        machineId,
-        snapshotDate,
-        period
-      }).lean();
+      const snapshot = await prisma.kPISnapshot.findFirst({
+        where: {
+          machineId,
+          snapshotDate,
+          period,
+        },
+      });
 
       return snapshot;
     } catch (error) {
@@ -45,16 +48,17 @@ class KPIRepository {
    */
   async getSnapshotsForMachine(machineId, startDate, endDate, period = 'daily') {
     try {
-      const snapshots = await KPISnapshot.find({
-        machineId,
-        period,
-        snapshotDate: {
-          $gte: new Date(startDate),
-          $lte: new Date(endDate)
-        }
-      })
-        .sort({ snapshotDate: -1 })
-        .lean();
+      const snapshots = await prisma.kPISnapshot.findMany({
+        where: {
+          machineId,
+          period,
+          snapshotDate: {
+            gte: new Date(startDate),
+            lte: new Date(endDate),
+          },
+        },
+        orderBy: { snapshotDate: 'desc' },
+      });
 
       return snapshots;
     } catch (error) {
@@ -68,10 +72,12 @@ class KPIRepository {
    */
   async getSnapshotsByDate(snapshotDate, period = 'daily') {
     try {
-      const snapshots = await KPISnapshot.find({
-        snapshotDate,
-        period
-      }).lean();
+      const snapshots = await prisma.kPISnapshot.findMany({
+        where: {
+          snapshotDate,
+          period,
+        },
+      });
 
       return snapshots;
     } catch (error) {
@@ -85,8 +91,10 @@ class KPIRepository {
    */
   async saveBatchSnapshots(snapshotsData) {
     try {
-      const saved = await KPISnapshot.insertMany(snapshotsData);
-      logger.info(`✅ Batch saved ${saved.length} KPI snapshots`);
+      const saved = await prisma.kPISnapshot.createMany({
+        data: snapshotsData,
+      });
+      logger.info(`✅ Batch saved ${saved.count} KPI snapshots`);
       return saved;
     } catch (error) {
       logger.error('❌ Error batch saving snapshots:', error.message);
@@ -99,12 +107,13 @@ class KPIRepository {
    */
   async getLatestSnapshot(machineId, period = 'daily') {
     try {
-      const snapshot = await KPISnapshot.findOne({
-        machineId,
-        period
-      })
-        .sort({ snapshotDate: -1 })
-        .lean();
+      const snapshot = await prisma.kPISnapshot.findFirst({
+        where: {
+          machineId,
+          period,
+        },
+        orderBy: { snapshotDate: 'desc' },
+      });
 
       return snapshot;
     } catch (error) {
@@ -114,35 +123,26 @@ class KPIRepository {
   }
 
   /**
-   * Aggregate KPI metrics across all machines
+   * Aggregate KPI metrics across all machines using raw SQL
    */
   async aggregateMetrics(startDate, endDate, period = 'daily') {
     try {
-      const aggregation = await KPISnapshot.aggregate([
-        {
-          $match: {
-            period,
-            snapshotDate: {
-              $gte: new Date(startDate),
-              $lte: new Date(endDate)
-            }
-          }
-        },
-        {
-          $group: {
-            _id: null,
-            totalPulses: { $sum: '$metrics.totalPulses' },
-            totalRuntime: { $sum: '$metrics.totalRuntime' },
-            totalDowntime: { $sum: '$metrics.totalDowntime' },
-            totalProblems: { $sum: '$metrics.problemCount' },
-            totalQualityDefects: { $sum: '$metrics.qualityDefects' },
-            avgRollWeight: { $avg: '$metrics.averageRollWeight' },
-            machineCount: { $sum: 1 }
-          }
-        }
-      ]);
+      const result = await prisma.$queryRaw`
+        SELECT
+          SUM(CAST(metrics->>'totalPulses' AS INTEGER)) as "totalPulses",
+          SUM(CAST(metrics->>'totalRuntime' AS INTEGER)) as "totalRuntime",
+          SUM(CAST(metrics->>'totalDowntime' AS INTEGER)) as "totalDowntime",
+          SUM(CAST(metrics->>'problemCount' AS INTEGER)) as "totalProblems",
+          SUM(CAST(metrics->>'qualityDefects' AS INTEGER)) as "totalQualityDefects",
+          AVG(CAST(metrics->>'averageRollWeight' AS FLOAT)) as "avgRollWeight",
+          COUNT(DISTINCT "machineId") as "machineCount"
+        FROM kpi_snapshots
+        WHERE period = ${period}
+          AND "snapshotDate" >= ${new Date(startDate)}
+          AND "snapshotDate" <= ${new Date(endDate)}
+      `;
 
-      return aggregation.length > 0 ? aggregation[0] : null;
+      return result.length > 0 ? result[0] : null;
     } catch (error) {
       logger.error('❌ Error aggregating metrics:', error.message);
       return null;
@@ -154,12 +154,14 @@ class KPIRepository {
    */
   async deleteSnapshotsBefore(cutoffDate) {
     try {
-      const result = await KPISnapshot.deleteMany({
-        snapshotDate: { $lt: cutoffDate }
+      const result = await prisma.kPISnapshot.deleteMany({
+        where: {
+          snapshotDate: { lt: cutoffDate },
+        },
       });
 
-      logger.info(`✅ Deleted ${result.deletedCount} KPI snapshots before ${cutoffDate}`);
-      return result.deletedCount;
+      logger.info(`✅ Deleted ${result.count} KPI snapshots before ${cutoffDate}`);
+      return result.count;
     } catch (error) {
       logger.error('❌ Error deleting old snapshots:', error.message);
       return 0;
@@ -171,10 +173,12 @@ class KPIRepository {
    */
   async snapshotExists(machineId, snapshotDate, period = 'daily') {
     try {
-      const exists = await KPISnapshot.exists({
-        machineId,
-        snapshotDate,
-        period
+      const exists = await prisma.kPISnapshot.findFirst({
+        where: {
+          machineId,
+          snapshotDate,
+          period,
+        },
       });
 
       return !!exists;

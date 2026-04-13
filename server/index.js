@@ -22,8 +22,7 @@ import mqttService from './modules/MQTT/mqttService.js';
 import { init as initBroadcast, sendToClient, broadcast } from './broadcast.js';
 import { startMqtt } from './mqtt.js';
 import * as telegram from './telegram.js';
-import { connectToMongoDB, disconnectFromMongoDB } from './db/mongodb.js';
-import { initializeIndexes } from './db/schemas.js';
+import { connectToPostgres, disconnectFromPostgres } from './db/prisma.js';
 import { startSnapshotGenerator, stopSnapshotGenerator } from './jobs/snapshotGenerator.js';
 import { startDataExporter, stopDataExporter } from './jobs/dataExporter.js';
 import logger from './utils/logger.js';
@@ -87,13 +86,13 @@ app.use('/api', apiVersioningMiddleware, addVersionToResponse, apiRouter);
 // Health check route (legacy support)
 app.get('/health', async (req, res) => {
   try {
-    import('mongoose').then(({ default: mongoose }) => {
-      const state = mongoose.connection.readyState;
+    import('./db/prisma.js').then(async ({ getConnectionStatus }) => {
+      const status = await getConnectionStatus();
       res.json({
         status: 'ok',
-        mongodb: {
-          connected: state === 1,
-          state: state === 1 ? 'connected' : 'disconnected'
+        database: {
+          connected: status.isConnected,
+          state: status.status
         }
       });
     });
@@ -153,23 +152,19 @@ const PORT = process.env.PORT || 5000;
 
 async function startServer() {
   try {
-    // 1. Connect to MongoDB
-    logger.info('🔌 Connecting to MongoDB...');
-    await connectToMongoDB();
+    // 1. Connect to PostgreSQL
+    logger.info('🔌 Connecting to PostgreSQL...');
+    await connectToPostgres();
     
-    // 2. Initialize database indexes
-    logger.info('📑 Initializing MongoDB indexes...');
-    await initializeIndexes();
-    
-    // 3. Start snapshot generator job
+    // 2. Start snapshot generator job
     logger.info('📊 Starting snapshot generator...');
     startSnapshotGenerator();
     
-    // 4. Start data exporter job
+    // 3. Start data exporter job
     logger.info('📦 Starting data exporter...');
     startDataExporter();
     
-    // 5. Start HTTP server
+    // 4. Start HTTP server
     server.listen(PORT, () => {
       logger.info(`✅ Server running on port ${PORT}`);
       console.log(`🚀 Server ready at http://localhost:${PORT}`);
@@ -195,8 +190,8 @@ process.on('SIGTERM', async () => {
   server.close(async () => {
     logger.info('HTTP server closed');
     
-    // Disconnect from MongoDB
-    await disconnectFromMongoDB();
+    // Disconnect from PostgreSQL
+    await disconnectFromPostgres();
     logger.info('✅ Graceful shutdown complete');
     process.exit(0);
   });

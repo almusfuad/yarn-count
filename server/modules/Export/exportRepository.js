@@ -1,9 +1,9 @@
 /**
  * Export Repository
- * Data access layer for Export collection in MongoDB
+ * Data access layer for Export collection in PostgreSQL
  */
 
-import { Export as ExportModel } from '../../db/schemas.js';
+import { prisma } from '../../db/prisma.js';
 import logger from '../../utils/logger.js';
 
 class ExportRepository {
@@ -12,9 +12,10 @@ class ExportRepository {
    */
   async createExport(exportData) {
     try {
-      const exportRecord = new ExportModel(exportData);
-      await exportRecord.save();
-      logger.info(`✅ Export record created: ${exportRecord._id}`);
+      const exportRecord = await prisma.export.create({
+        data: exportData,
+      });
+      logger.info(`✅ Export record created: ${exportRecord.id}`);
       return exportRecord;
     } catch (error) {
       logger.error('❌ Error creating export record:', error.message);
@@ -27,7 +28,9 @@ class ExportRepository {
    */
   async getExportById(exportId) {
     try {
-      const exportRecord = await ExportModel.findById(exportId).lean();
+      const exportRecord = await prisma.export.findUnique({
+        where: { id: exportId },
+      });
       return exportRecord;
     } catch (error) {
       logger.error('❌ Error getting export by ID:', error.message);
@@ -40,44 +43,45 @@ class ExportRepository {
    */
   async getExports(filters = {}, limit = 10, offset = 0) {
     try {
-      const query = {};
+      const where = {};
 
       if (filters.machineId) {
-        query.machineId = filters.machineId;
+        where.machineId = filters.machineId;
       }
 
       if (filters.status) {
-        query.status = filters.status;
+        where.status = filters.status;
       }
 
       if (filters.exportType) {
-        query.exportType = filters.exportType;
+        where.exportType = filters.exportType;
       }
 
       if (filters.startDate || filters.endDate) {
-        query.exportedAt = {};
+        where.createdAt = {};
         if (filters.startDate) {
-          query.exportedAt.$gte = new Date(filters.startDate);
+          where.createdAt.gte = new Date(filters.startDate);
         }
         if (filters.endDate) {
-          query.exportedAt.$lte = new Date(filters.endDate);
+          where.createdAt.lte = new Date(filters.endDate);
         }
       }
 
-      const exports = await ExportModel.find(query)
-        .sort({ exportedAt: -1 })
-        .limit(limit)
-        .skip(offset)
-        .lean();
+      const exports = await prisma.export.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        take: limit,
+        skip: offset,
+      });
 
-      const count = await ExportModel.countDocuments(query);
+      const count = await prisma.export.count({ where });
 
       return {
         data: exports,
         total: count,
         limit,
         offset,
-        pages: Math.ceil(count / limit)
+        pages: Math.ceil(count / limit),
       };
     } catch (error) {
       logger.error('❌ Error getting exports:', error.message);
@@ -90,10 +94,11 @@ class ExportRepository {
    */
   async getExportsByMachine(machineId, limit = 50) {
     try {
-      const exports = await ExportModel.find({ machineId })
-        .sort({ exportedAt: -1 })
-        .limit(limit)
-        .lean();
+      const exports = await prisma.export.findMany({
+        where: { machineId },
+        orderBy: { createdAt: 'desc' },
+        take: limit,
+      });
 
       return exports;
     } catch (error) {
@@ -107,11 +112,10 @@ class ExportRepository {
    */
   async updateExport(exportId, updates) {
     try {
-      const exportRecord = await ExportModel.findByIdAndUpdate(
-        exportId,
-        updates,
-        { new: true }
-      ).lean();
+      const exportRecord = await prisma.export.update({
+        where: { id: exportId },
+        data: updates,
+      });
 
       logger.info(`✅ Export record updated: ${exportId}`);
       return exportRecord;
@@ -126,18 +130,14 @@ class ExportRepository {
    */
   async getExportCountByStatus() {
     try {
-      const counts = await ExportModel.aggregate([
-        {
-          $group: {
-            _id: '$status',
-            count: { $sum: 1 }
-          }
-        }
-      ]);
+      const counts = await prisma.export.groupBy({
+        by: ['status'],
+        _count: true,
+      });
 
       const result = {};
-      counts.forEach(({ _id, count }) => {
-        result[_id] = count;
+      counts.forEach(({ status, _count }) => {
+        result[status] = _count;
       });
 
       return result;
@@ -152,10 +152,10 @@ class ExportRepository {
    */
   async getRecentExports(limit = 10) {
     try {
-      const exports = await ExportModel.find()
-        .sort({ exportedAt: -1 })
-        .limit(limit)
-        .lean();
+      const exports = await prisma.export.findMany({
+        orderBy: { createdAt: 'desc' },
+        take: limit,
+      });
 
       return exports;
     } catch (error) {

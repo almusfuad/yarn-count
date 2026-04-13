@@ -1,29 +1,28 @@
 /**
  * Event Repository
- * Data access layer for Event collection in MongoDB
+ * Data access layer for Event collection in PostgreSQL
  */
 
-import { Event as EventModel } from '../../db/schemas.js';
+import { prisma } from '../../db/prisma.js';
 import logger from '../../utils/logger.js';
 
 class EventRepository {
   /**
-   * Create a new event in MongoDB
+   * Create a new event in PostgreSQL
    * Non-blocking: returns immediately, write happens asynchronously
    */
   async logEvent(type, machineId, data) {
     try {
       Promise.resolve().then(async () => {
         try {
-          const event = new EventModel({
-            type,
-            machineId,
-            timestamp: new Date(),
-            data,
-            createdAt: new Date(),
+          await prisma.event.create({
+            data: {
+              type,
+              machineId,
+              timestamp: new Date(),
+              data: data || {},
+            },
           });
-
-          await event.save();
           // Optionally log successful write (can be noisy for high-frequency pulses)
           // logger.info(`✅ Event logged: ${type} for ${machineId}`);
         } catch (writeError) {
@@ -55,11 +54,12 @@ class EventRepository {
             type: evt.type,
             machineId: evt.machineId,
             timestamp: new Date(),
-            data: evt.data,
-            createdAt: new Date(),
+            data: evt.data || {},
           }));
 
-          await EventModel.insertMany(formattedEvents);
+          await prisma.event.createMany({
+            data: formattedEvents,
+          });
           logger.info(`✅ Batch logged: ${events.length} events`);
         } catch (writeError) {
           logger.error(
@@ -81,11 +81,13 @@ class EventRepository {
    */
   async getEventCount(machineId, startDate, endDate) {
     try {
-      const count = await EventModel.countDocuments({
-        machineId,
-        timestamp: {
-          $gte: startDate,
-          $lte: endDate,
+      const count = await prisma.event.count({
+        where: {
+          machineId,
+          timestamp: {
+            gte: startDate,
+            lte: endDate,
+          },
         },
       });
       return count;
@@ -103,8 +105,8 @@ class EventRepository {
       const query = {
         machineId,
         timestamp: {
-          $gte: startDate,
-          $lte: endDate,
+          gte: startDate,
+          lte: endDate,
         },
       };
 
@@ -112,9 +114,10 @@ class EventRepository {
         query.type = type;
       }
 
-      const events = await EventModel.find(query)
-        .sort({ timestamp: -1 })
-        .lean();
+      const events = await prisma.event.findMany({
+        where: query,
+        orderBy: { timestamp: 'desc' },
+      });
 
       return events;
     } catch (error) {
@@ -128,10 +131,11 @@ class EventRepository {
    */
   async getEventsByType(machineId, type, limit = 100) {
     try {
-      const events = await EventModel.find({ machineId, type })
-        .sort({ timestamp: -1 })
-        .limit(limit)
-        .lean();
+      const events = await prisma.event.findMany({
+        where: { machineId, type },
+        orderBy: { timestamp: 'desc' },
+        take: limit,
+      });
 
       return events;
     } catch (error) {
@@ -145,8 +149,10 @@ class EventRepository {
    */
   async getDistinctMachineIds() {
     try {
-      const machineIds = await EventModel.distinct('machineId');
-      return machineIds;
+      const events = await prisma.event.groupBy({
+        by: ['machineId'],
+      });
+      return events.map(e => e.machineId);
     } catch (error) {
       logger.error('❌ Error getting distinct machine IDs:', error.message);
       return [];
@@ -158,11 +164,13 @@ class EventRepository {
    */
   async deleteEventsBefore(cutoffDate) {
     try {
-      const result = await EventModel.deleteMany({
-        timestamp: { $lt: cutoffDate },
+      const result = await prisma.event.deleteMany({
+        where: {
+          timestamp: { lt: cutoffDate },
+        },
       });
-      logger.info(`✅ Deleted ${result.deletedCount} events before ${cutoffDate}`);
-      return result.deletedCount;
+      logger.info(`✅ Deleted ${result.count} events before ${cutoffDate}`);
+      return result.count;
     } catch (error) {
       logger.error('❌ Error deleting old events:', error.message);
       return 0;
