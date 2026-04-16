@@ -1,18 +1,31 @@
-version: "3.9"
+version: '3.9'
 
 services:
-  app:
-    build: .
+  knit-production-backend-main:
+    build:
+      context: ./knit-production-backend-main
+      dockerfile: Dockerfile
+    env_file: .env
     ports:
       - "5000:5000"
-    env_file: .env
-    environment:
-      PORT: "5000"
-      MQTT_BROKER: "mqtt://152.42.238.142:1883"
+    extra_hosts:
+      - "host-gateway:host-gateway"
     networks:
-      - infra-network
+      - app-network
+    restart: unless-stopped
+
+  knitt-production-client:
+    build:
+      context: ./knitt-production-client
+      dockerfile: Dockerfile
+    ports:
+      - "3100:3100"
+    depends_on:
+      - knit-production-backend-main
+    networks:
+      - app-network
     restart: unless-stopped
 
 networks:
-  infra-network:
-    external: true
+  app-network:
+    driver: bridge

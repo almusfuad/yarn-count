@@ -1,9 +1,7 @@
 import { Module, Global } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { ServeStaticModule } from '@nestjs/serve-static';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { ScheduleModule } from '@nestjs/schedule';
-import { join } from 'path';
 import { APP_GUARD } from '@nestjs/core';
 
 // Core modules
@@ -38,11 +36,6 @@ import { JwtAuthGuard } from './modules/auth/guards/jwt-auth.guard';
       envFilePath: ['.env', '.env.local'],
     }),
 
-    // Static files (client app)
-    ServeStaticModule.forRoot({
-      rootPath: join(__dirname, '..', '..', 'client', 'dist'),
-      exclude: ['/api*'],
-    }),
 
     // Event bus (decouples cross-module communication)
     EventEmitterModule.forRoot(),
