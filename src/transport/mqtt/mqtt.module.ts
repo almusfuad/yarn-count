@@ -5,5 +5,6 @@ import { SensorsModule } from '@/modules/sensors/sensors.module';
 @Module({
   imports: [SensorsModule],
   providers: [MqttService],
+  exports: [MqttService],
 })
 export class MqttTransportModule {}

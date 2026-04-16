@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { HealthCheckService, HealthCheckResult } from '@nestjs/terminus';
 import { PrismaHealthIndicator } from './prisma-health.indicator';
+import { MqttHealthIndicator } from './mqtt-health.indicator';
 import { PrismaService } from '@/common/database/prisma.service';
 import { ExportsService } from '../exports/exports.service';
 
@@ -9,6 +10,7 @@ export class HealthService {
   constructor(
     private health: HealthCheckService,
     private prismaIndicator: PrismaHealthIndicator,
+    private mqttIndicator: MqttHealthIndicator,
     private prisma: PrismaService,
     private exportsService: ExportsService,
   ) {}
@@ -16,6 +18,7 @@ export class HealthService {
   async checkHealth(): Promise<HealthCheckResult> {
     return this.health.check([
       () => this.prismaIndicator.isHealthy(),
+      () => this.mqttIndicator.isHealthy(),
     ]);
   }
 

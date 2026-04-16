@@ -19,6 +19,7 @@ import {
 export class MqttService implements OnModuleInit, OnModuleDestroy {
   private client: MqttClient | null = null;
   private logger = new Logger(MqttService.name);
+  private isConnected: boolean = false;
 
   constructor(
     private config: ConfigService,
@@ -40,8 +41,10 @@ export class MqttService implements OnModuleInit, OnModuleDestroy {
       });
 
       this.client.on('connect', () => {
+        this.isConnected = true;
         this.logger.log(`✅ Connected to MQTT broker: ${brokerUrl}`);
         this.appLogger.log(`✅ Connected to MQTT broker: ${brokerUrl}`);
+        this.logger.log(`📨 Subscribed to topic: ${MQTT_TOPIC_FILTER}`);
         this.client!.subscribe(MQTT_TOPIC_FILTER, { qos: 1 });
       });
 
@@ -55,6 +58,7 @@ export class MqttService implements OnModuleInit, OnModuleDestroy {
       });
 
       this.client.on('disconnect', () => {
+        this.isConnected = false;
         this.logger.warn('⚠️  Disconnected from MQTT broker');
       });
     } catch (error: any) {
@@ -122,6 +126,16 @@ export class MqttService implements OnModuleInit, OnModuleDestroy {
     } catch (error: any) {
       this.logger.error(`Error publishing MQTT message: ${error?.message}`);
     }
+  }
+
+  /**
+   * Get MQTT connection status
+   */
+  getConnectionStatus(): { isConnected: boolean; status: string } {
+    return {
+      isConnected: this.isConnected,
+      status: this.isConnected ? 'connected' : 'disconnected',
+    };
   }
 
   /**
